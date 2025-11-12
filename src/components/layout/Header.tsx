@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -7,21 +8,18 @@ import { UserNav } from '@/components/auth/UserNav';
 import { PenSquare, Search } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
 import { useEffect, useState } from 'react';
-import { getMe } from '@/lib/data';
 
 export default function Header() {
-  const [user, setUser] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
-    async function checkUser() {
-      // In a real app with auth, you'd check a session.
-      // Here, we'll see if we can get a 'me' user.
-      const currentUser = await getMe();
-      setUser(!!currentUser);
-    }
-    checkUser();
+    setIsClient(true);
   }, []);
+
+  // A simple check for a "logged in" state. 
+  // In a real app, this would be a proper session check.
+  const isLoggedIn = isClient && !!localStorage.getItem('followedUsers');
 
   return (
     <>
@@ -46,12 +44,16 @@ export default function Header() {
                 Write
               </Button>
             </Link>
-            {user ? (
-              <UserNav />
+            {isClient ? (
+                isLoggedIn ? (
+                    <UserNav />
+                ) : (
+                    <Link href="/login">
+                        <Button size="sm">Sign In</Button>
+                    </Link>
+                )
             ) : (
-              <Link href="/login">
-                <Button size="sm">Sign In</Button>
-              </Link>
+                <div className="h-8 w-9 rounded-md bg-muted animate-pulse" />
             )}
           </div>
         </div>

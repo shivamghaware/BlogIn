@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -48,13 +49,13 @@ export function LoginForm() {
   function onSubmit(data: LoginFormValues) {
     startTransition(() => {
       // In a real app, you would handle authentication here.
-      console.log('Logging in with:', data);
-      
+      // This is just a simulation.
       toast({
         title: 'Login Successful',
         description: 'Welcome back!',
       });
-      // For now, we'll just show a toast.
+      // For now, we'll just show a toast and redirect.
+      window.location.href = '/';
     });
   }
 

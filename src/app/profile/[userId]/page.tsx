@@ -18,6 +18,7 @@ type UserProfilePageProps = {
 };
 
 export default function UserProfilePage({ params }: UserProfilePageProps) {
+  const { userId } = params;
   const [user, setUser] = useState<User | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
@@ -30,7 +31,6 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
 
   useEffect(() => {
     async function fetchData() {
-      const { userId } = params;
       const fetchedUser = await getUser(userId);
       if (!fetchedUser) {
         setUser(null); 
@@ -53,7 +53,7 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
       setAllUsers(allUsersData);
     }
     fetchData();
-  }, [params]);
+  }, [userId]);
 
   useEffect(() => {
     if (user && allUsers.length > 0) {

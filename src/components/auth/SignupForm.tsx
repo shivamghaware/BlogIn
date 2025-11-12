@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -54,13 +55,13 @@ export function SignupForm() {
   function onSubmit(data: SignupFormValues) {
     startTransition(() => {
       // In a real app, you would handle user registration here.
-      console.log('Signing up with:', data);
-      
+      // This is just a simulation.
       toast({
         title: 'Account Created',
         description: "You've successfully signed up!",
       });
-      // For now, we'll just show a toast.
+      // For now, we'll just show a toast and redirect.
+       window.location.href = '/';
     });
   }
 
