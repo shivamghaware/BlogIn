@@ -20,6 +20,8 @@ type PostCardProps = {
 export function PostCard({ post }: PostCardProps) {
     const { toast } = useToast();
     const [isBookmarked, setIsBookmarked] = useState(false);
+    const [isLiked, setIsLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(post.likes);
 
     const getInitials = (name: string) => {
         const [firstName, lastName] = name.split(' ');
@@ -34,6 +36,14 @@ export function PostCard({ post }: PostCardProps) {
             description: isBookmarked ? 'The post has been removed from your saved list.' : 'You can find this post in your saved list.',
         });
     }
+
+    const handleLike = () => {
+      setIsLiked(!isLiked);
+      setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+      toast({
+          title: isLiked ? 'Unliked' : 'Liked!',
+      });
+  }
 
   return (
     <article className="flex flex-col md:flex-row gap-8">
@@ -65,12 +75,14 @@ export function PostCard({ post }: PostCardProps) {
                 <span className="text-sm text-muted-foreground">· 5 min read</span>
             </div>
             <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                    <Heart className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleLike}>
+                    <Heart className={cn('h-4 w-4', isLiked && 'fill-destructive text-destructive')} />
                 </Button>
-                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                    <MessageCircle className="h-4 w-4" />
-                </Button>
+                <Link href={`/posts/${post.slug}#comments`}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                        <MessageCircle className="h-4 w-4" />
+                    </Button>
+                </Link>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleBookmark}>
                     <Bookmark className={cn('h-4 w-4', isBookmarked && 'fill-primary text-primary')} />
                 </Button>

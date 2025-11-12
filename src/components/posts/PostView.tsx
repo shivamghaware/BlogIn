@@ -20,9 +20,12 @@ type PostViewProps = {
   comments: Comment[];
 };
 
-export default function PostView({ post, comments }: PostViewProps) {
+export default function PostView({ post, comments: initialComments }: PostViewProps) {
   const { toast } = useToast();
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(post.likes);
+  const [comments, setComments] = useState<Comment[]>(initialComments);
 
   const getInitials = (name: string) => {
     const [firstName, lastName] = name.split(' ');
@@ -36,6 +39,18 @@ export default function PostView({ post, comments }: PostViewProps) {
         description: isBookmarked ? 'The post has been removed from your saved list.' : 'You can find this post in your saved list.',
     });
   }
+
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+    toast({
+        title: isLiked ? 'Unliked' : 'Liked!',
+    });
+  }
+
+  const handleCommentSubmit = (newComment: Comment) => {
+    setComments(prev => [newComment, ...prev]);
+  };
 
   return (
     <article>
@@ -69,12 +84,14 @@ export default function PostView({ post, comments }: PostViewProps) {
       <div className="sticky top-14 z-10 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-2 border-y mb-8">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className='flex items-center gap-2'>
-                <Button variant="ghost" size="sm" className='text-muted-foreground'>
-                    <Heart className="mr-2 h-4 w-4" /> {post.likes}
+                <Button variant="ghost" size="sm" className='text-muted-foreground' onClick={handleLike}>
+                    <Heart className={cn("mr-2 h-4 w-4", isLiked && 'fill-destructive text-destructive')} /> {likeCount}
                 </Button>
-                <Button variant="ghost" size="sm" className='text-muted-foreground'>
-                    <MessageCircle className="mr-2 h-4 w-4" /> {post.commentsCount}
-                </Button>
+                <a href="#comments">
+                  <Button variant="ghost" size="sm" className='text-muted-foreground'>
+                      <MessageCircle className="mr-2 h-4 w-4" /> {comments.length}
+                  </Button>
+                </a>
             </div>
             <div>
                  <Button variant="ghost" size="icon" className='text-muted-foreground' onClick={handleBookmark}>
@@ -114,7 +131,9 @@ export default function PostView({ post, comments }: PostViewProps) {
 
       <Separator className="my-12" />
 
-      <CommentSection comments={comments} />
+      <div id="comments">
+        <CommentSection comments={comments} onCommentSubmit={handleCommentSubmit} />
+      </div>
     </article>
   );
 }

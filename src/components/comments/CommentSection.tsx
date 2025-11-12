@@ -1,15 +1,23 @@
-import type { Comment } from '@/lib/types';
+import type { Comment, User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { CommentForm } from './CommentForm';
 
 type CommentSectionProps = {
   comments: Comment[];
+  onCommentSubmit: (newComment: Comment) => void;
 };
 
-export function CommentSection({ comments }: CommentSectionProps) {
+// This would typically come from an authentication context
+const currentUser: User = { 
+  id: 'user-1', 
+  name: 'Elena Petrova', 
+  email: 'elena@example.com', 
+  avatarUrl: 'https://picsum.photos/seed/201/40/40' 
+};
+
+export function CommentSection({ comments, onCommentSubmit }: CommentSectionProps) {
     const getInitials = (name: string) => {
         const [firstName, lastName] = name.split(' ');
         return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
@@ -21,16 +29,7 @@ export function CommentSection({ comments }: CommentSectionProps) {
       </h2>
 
       <div className="mb-8">
-        <div className="flex items-start space-x-4">
-            <Avatar>
-                <AvatarImage src="https://picsum.photos/seed/201/40/40" />
-                <AvatarFallback>EP</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-                <Textarea placeholder="What are your thoughts?" className="mb-2" />
-                <Button>Respond</Button>
-            </div>
-        </div>
+        <CommentForm currentUser={currentUser} onCommentSubmit={onCommentSubmit} />
       </div>
 
       <div className="space-y-8">
