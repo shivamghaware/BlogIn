@@ -40,14 +40,19 @@ export function PostCard({ post }: PostCardProps) {
     }, [post.slug, post.likes]);
 
     const getInitials = (name: string) => {
+        if (!name) return '';
         const [firstName, lastName] = name.split(' ');
         return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
     }
-    const snippet = post.content.split('\n\n')[0].substring(0, 150) + '...';
+    const snippet = post.content.split('\n\n')[0].substring(0, 200) + '...';
 
-    const handleBookmark = (e: React.MouseEvent) => {
-        e.preventDefault();
+    const handleActionClick = (e: React.MouseEvent, action: () => void) => {
         e.stopPropagation();
+        e.preventDefault();
+        action();
+    }
+
+    const handleBookmark = () => {
         const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
         const newIsBookmarked = !isBookmarked;
         if (newIsBookmarked) {
@@ -68,9 +73,7 @@ export function PostCard({ post }: PostCardProps) {
         });
     }
 
-    const handleLike = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+    const handleLike = () => {
         const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
         const newIsLiked = !isLiked;
         let newLikeCount = likeCount;
@@ -97,35 +100,29 @@ export function PostCard({ post }: PostCardProps) {
         });
     }
 
-    const handleNavigation = (e: React.MouseEvent, href: string) => {
-      e.stopPropagation();
-      router.push(href);
-    };
-
   return (
      <Link href={`/posts/${post.slug}`} className="block group cursor-pointer">
-        <article>
-            <div className="flex items-center gap-2 text-sm mb-2">
-                <button onClick={(e) => handleNavigation(e, `/profile/${post.author.id}`)} className="flex items-center gap-2 relative z-10">
+        <article className="space-y-4">
+            <div className="flex items-center gap-2 text-sm">
+                <Link href={`/profile/${post.author.id}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-2 relative z-10">
                     <Avatar className="h-6 w-6">
                         <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
                         <AvatarFallback>{getInitials(post.author.name)}</AvatarFallback>
                     </Avatar>
                     <span className="font-medium hover:underline">{post.author.name}</span>
-                </button>
+                </Link>
                 <span className="text-muted-foreground">·</span>
                 <time dateTime={post.createdAt} className="text-muted-foreground">
                     {format(new Date(post.createdAt), 'MMM d, yyyy')}
                 </time>
             </div>
+            
             <div className="flex flex-col md:flex-row gap-8 w-full">
                 <div className="flex-1">
-                    <div className="mt-2">
-                        <h2 className="text-2xl font-bold font-headline group-hover:text-primary transition-colors">
-                            {post.title}
-                        </h2>
-                        <p className="mt-2 text-muted-foreground leading-relaxed">{snippet}</p>
-                    </div>
+                    <h2 className="text-2xl font-bold font-headline group-hover:text-primary transition-colors">
+                        {post.title}
+                    </h2>
+                    <p className="mt-2 text-muted-foreground leading-relaxed">{snippet}</p>
                 </div>
                 <div className="w-full md:w-48 lg:w-56 aspect-[4/3] relative shrink-0">
                     <Image
@@ -138,23 +135,26 @@ export function PostCard({ post }: PostCardProps) {
                     />
                 </div>
             </div>
-            <div className="mt-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
+
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 flex-wrap">
                     {post.tags.map((tag) => (
-                        <button key={tag} onClick={(e) => handleNavigation(e, `/?tag=${tag}`)}>
+                        <Link key={tag} href={`/?tag=${tag}`} onClick={(e) => e.stopPropagation()}>
                             <Badge variant="secondary" className="font-normal">{tag}</Badge>
-                        </button>
+                        </Link>
                     ))}
-                    <span className="text-sm text-muted-foreground">· 5 min read</span>
+                    <span className="text-sm text-muted-foreground hidden sm:inline">· 5 min read</span>
                 </div>
                 <div className="flex items-center gap-1 relative z-10">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleLike}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={(e) => handleActionClick(e, handleLike)}>
                         <Heart className={cn('h-4 w-4', isLiked && 'fill-destructive text-destructive')} />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={(e) => handleNavigation(e, `/posts/${post.slug}#comments`)}>
-                        <MessageCircle className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleBookmark}>
+                    <Link href={`/posts/${post.slug}#comments`} onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                <MessageCircle className="h-4 w-4" />
+                        </Button>
+                    </Link>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={(e) => handleActionClick(e, handleBookmark)}>
                         <Bookmark className={cn('h-4 w-4', isBookmarked && 'fill-primary text-primary')} />
                     </Button>
                 </div>
