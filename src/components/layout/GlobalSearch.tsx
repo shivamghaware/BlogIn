@@ -4,7 +4,6 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { FileText, Search, User, Tag } from 'lucide-react';
-
 import {
   CommandDialog,
   CommandEmpty,
@@ -17,37 +16,22 @@ import type { Post, User as UserType } from '@/lib/types';
 import { getPosts, getUsers } from '@/lib/data';
 import Link from 'next/link';
 import { Command as CommandPrimitive } from 'cmdk';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type GlobalSearchProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
 
-const CommandItemLink = React.forwardRef<
-  React.ElementRef<typeof CommandPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Item> & { href: string }
->(({ href, ...props }, ref) => {
-  const router = useRouter();
-  return (
-    <Link href={href} passHref legacyBehavior>
-      <CommandPrimitive.Item
-        ref={ref}
-        {...props}
-        onSelect={(value) => {
-          props.onSelect?.(value);
-          router.push(href);
-        }}
-      />
-    </Link>
-  );
-});
-CommandItemLink.displayName = 'CommandItemLink';
-
+type Filter = 'all' | 'topics' | 'posts' | 'users';
 
 export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
   const [posts, setPosts] = React.useState<Post[]>([]);
   const [users, setUsers] = React.useState<UserType[]>([]);
   const [tags, setTags] = React.useState<string[]>([]);
+  const [filter, setFilter] = React.useState<Filter>('all');
+  const router = useRouter();
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -75,54 +59,87 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
     fetchAllData();
   }, [open]);
 
-  const handleSelect = () => {
+  const handleSelect = (href: string) => {
+    router.push(href);
     onOpenChange(false);
   }
 
+  const renderGroup = (groupFilter: Filter) => {
+    if (filter !== 'all' && filter !== groupFilter) {
+      return null;
+    }
+    switch (groupFilter) {
+      case 'topics':
+        return (
+          <CommandGroup heading="Topics">
+            {tags.map((tag) => (
+              <CommandItem
+                key={tag}
+                value={`tag-${tag}`}
+                onSelect={() => handleSelect(`/?tag=${encodeURIComponent(tag)}`)}
+              >
+                <Tag className="mr-2 h-4 w-4" />
+                <span>{tag}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        );
+      case 'posts':
+        return (
+          <CommandGroup heading="Posts">
+            {posts.map((post) => (
+              <CommandItem
+                key={post.slug}
+                value={`post-${post.slug}-${post.title}`}
+                onSelect={() => handleSelect(`/posts/${post.slug}`)}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                <span>{post.title}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        );
+      case 'users':
+        return (
+          <CommandGroup heading="Users">
+            {users.map((user) => (
+              <CommandItem
+                key={user.id}
+                value={`user-${user.id}-${user.name}`}
+                onSelect={() => handleSelect(`/profile/${user.id}`)}
+              >
+                <User className="mr-2 h-4 w-4" />
+                <span>{user.name}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        );
+      default:
+        return null;
+    }
+  }
+  
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
       <CommandInput placeholder="Search for posts, users or topics..." />
+       <div className="flex items-center gap-2 border-b px-3">
+            {(['all', 'topics', 'posts', 'users'] as Filter[]).map((f) => (
+                <Button
+                key={f}
+                variant={filter === f ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setFilter(f)}
+                className="capitalize h-8 text-sm"
+                >
+                {f}
+                </Button>
+            ))}
+      </div>
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Topics">
-          {tags.map((tag) => (
-            <CommandItemLink
-              key={tag}
-              href={`/?tag=${encodeURIComponent(tag)}`}
-              value={`tag-${tag}`}
-              onSelect={handleSelect}
-            >
-              <Tag className="mr-2 h-4 w-4" />
-              <span>{tag}</span>
-            </CommandItemLink>
-          ))}
-        </CommandGroup>
-        <CommandGroup heading="Posts">
-          {posts.map((post) => (
-            <CommandItemLink
-              key={post.slug}
-              href={`/posts/${post.slug}`}
-              value={`post-${post.slug}-${post.title}`}
-              onSelect={handleSelect}
-            >
-              <FileText className="mr-2 h-4 w-4" />
-              <span>{post.title}</span>
-            </CommandItemLink>
-          ))}
-        </CommandGroup>
-        <CommandGroup heading="Users">
-          {users.map((user) => (
-            <CommandItemLink
-              key={user.id}
-              href={`/profile/${user.id}`}
-              value={`user-${user.id}-${user.name}`}
-              onSelect={handleSelect}
-            >
-              <User className="mr-2 h-4 w-4" />
-              <span>{user.name}</span>
-            </CommandItemLink>
-          ))}
-        </CommandGroup>
+        {renderGroup('topics')}
+        {renderGroup('posts')}
+        {renderGroup('users')}
       </CommandList>
     </CommandDialog>
   );
