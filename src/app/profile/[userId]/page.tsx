@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -19,8 +20,7 @@ type UserProfilePageProps = {
     };
 };
 
-export default function UserProfilePage({ params }: UserProfilePageProps) {
-  const { userId } = params;
+export default function UserProfilePage({ params: { userId } }: UserProfilePageProps) {
   const [user, setUser] = useState<User | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);

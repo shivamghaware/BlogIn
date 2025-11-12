@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { PostCreator } from '@/components/posts/PostCreator';
@@ -13,12 +14,12 @@ type EditPostPageProps = {
     };
 };
 
-export default function EditPostPage({ params }: EditPostPageProps) {
+export default function EditPostPage({ params: { slug } }: EditPostPageProps) {
   const [post, setPost] = useState<Post | null | undefined>(undefined);
 
   useEffect(() => {
     async function fetchPost() {
-      const fetchedPost = await getPost(params.slug);
+      const fetchedPost = await getPost(slug);
       if (!fetchedPost) {
         setPost(null);
       } else {
@@ -26,7 +27,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
       }
     }
     fetchPost();
-  }, [params.slug]);
+  }, [slug]);
 
   if (post === undefined) {
     return <div>Loading...</div>;
