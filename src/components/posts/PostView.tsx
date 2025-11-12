@@ -210,7 +210,7 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
             </div>
           </div>
            {isOwnPost ? (
-            <Link href={`/posts/${post.slug}/edit`}>
+            <Link href={`/p/${post.slug}/edit`}>
               <Button variant="outline">
                 <Pen className="mr-2 h-4 w-4" />
                 Edit Post

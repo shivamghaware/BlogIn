@@ -112,14 +112,14 @@ export function PostCard({ post }: PostCardProps) {
         
         <div className="flex flex-col md:flex-row gap-8 w-full">
             <div className="flex-1">
-                <Link href={`/posts/${post.slug}`}>
+                <Link href={`/p/${post.slug}`}>
                     <h2 className="text-2xl font-bold font-headline group-hover:text-primary transition-colors">
                         {post.title}
                     </h2>
                 </Link>
                 <p className="mt-2 text-muted-foreground leading-relaxed">{snippet}</p>
             </div>
-            <Link href={`/posts/${post.slug}`} className="w-full md:w-48 lg:w-56 aspect-[4/3] relative shrink-0">
+            <Link href={`/p/${post.slug}`} className="w-full md:w-48 lg:w-56 aspect-[4/3] relative shrink-0">
                 <Image
                     src={post.imageUrl}
                     alt={post.title}
@@ -144,7 +144,7 @@ export function PostCard({ post }: PostCardProps) {
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleLike}>
                     <Heart className={cn('h-4 w-4', isLiked && 'fill-destructive text-destructive')} />
                 </Button>
-                <Link href={`/posts/${post.slug}#comments`}>
+                <Link href={`/p/${post.slug}#comments`}>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
                             <MessageCircle className="h-4 w-4" />
                     </Button>

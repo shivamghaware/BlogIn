@@ -71,9 +71,10 @@ export async function createPostAction(formData: FormData) {
     // if the data source was persistent.
 
     revalidatePath('/');
-    revalidatePath(`/posts/${slug || title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')}`);
+    const postSlug = slug || title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+    revalidatePath(`/p/${postSlug}`);
     if (slug) {
-        redirect(`/posts/${slug}`);
+        redirect(`/p/${slug}`);
     } else {
         redirect('/');
     }

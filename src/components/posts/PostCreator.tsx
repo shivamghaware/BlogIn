@@ -130,7 +130,7 @@ export function PostCreator({ post }: PostCreatorProps) {
         
         // This will redirect to the new post if it's created, or the edited post
         // A more robust solution would get the returned slug from createPostAction
-        router.push(post ? `/posts/${post.slug}` : `/`);
+        router.push(post ? `/p/${post.slug}` : `/`);
         router.refresh();
     });
   };
@@ -222,4 +222,3 @@ export function PostCreator({ post }: PostCreatorProps) {
     </Form>
   );
 }
-
