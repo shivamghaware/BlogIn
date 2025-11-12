@@ -22,11 +22,13 @@ export function PostCard({ post }: PostCardProps) {
     <article className="flex flex-col md:flex-row gap-8">
       <div className="flex-1">
         <div className="flex items-center gap-2 text-sm">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
-            <AvatarFallback>{getInitials(post.author.name)}</AvatarFallback>
-          </Avatar>
-          <span className="font-medium">{post.author.name}</span>
+          <Link href={`/profile/${post.author.id}`} className="flex items-center gap-2">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
+              <AvatarFallback>{getInitials(post.author.name)}</AvatarFallback>
+            </Avatar>
+            <span className="font-medium hover:underline">{post.author.name}</span>
+          </Link>
           <span className="text-muted-foreground">·</span>
           <time dateTime={post.createdAt} className="text-muted-foreground">
             {format(new Date(post.createdAt), 'MMM d, yyyy')}

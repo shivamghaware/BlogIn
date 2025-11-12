@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, Bookmark } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { CommentSection } from '@/components/comments/CommentSection';
+import Link from 'next/link';
 
 type PostViewProps = {
   post: Post;
@@ -26,12 +27,16 @@ export default function PostView({ post, comments }: PostViewProps) {
           {post.title}
         </h1>
         <div className="flex items-center space-x-4">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
-            <AvatarFallback>{getInitials(post.author.name)}</AvatarFallback>
-          </Avatar>
+            <Link href={`/profile/${post.author.id}`}>
+                <Avatar className="h-12 w-12">
+                    <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
+                    <AvatarFallback>{getInitials(post.author.name)}</AvatarFallback>
+                </Avatar>
+            </Link>
           <div className="flex-1">
-            <p className="font-medium">{post.author.name}</p>
+            <Link href={`/profile/${post.author.id}`} className="hover:underline">
+                <p className="font-medium">{post.author.name}</p>
+            </Link>
             <div className="text-sm text-muted-foreground">
               <span>5 min read</span>
               <span className="mx-1">·</span>

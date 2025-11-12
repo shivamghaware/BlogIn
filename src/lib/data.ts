@@ -118,3 +118,9 @@ export async function getMe(): Promise<User> {
     setTimeout(() => resolve(users[0]), 50);
   });
 }
+
+export async function getUser(id: string): Promise<User | undefined> {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(users.find((u) => u.id === id)), 50);
+  });
+}

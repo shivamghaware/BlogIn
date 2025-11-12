@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 type CommentSectionProps = {
   comments: Comment[];
@@ -35,13 +36,17 @@ export function CommentSection({ comments }: CommentSectionProps) {
       <div className="space-y-8">
         {comments.map((comment) => (
           <div key={comment.id} className="flex items-start space-x-4">
-            <Avatar>
-              <AvatarImage src={comment.author.avatarUrl} alt={comment.author.name} />
-              <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
-            </Avatar>
+            <Link href={`/profile/${comment.author.id}`}>
+                <Avatar>
+                <AvatarImage src={comment.author.avatarUrl} alt={comment.author.name} />
+                <AvatarFallback>{getInitials(comment.author.name)}</AvatarFallback>
+                </Avatar>
+            </Link>
             <div className="flex-1">
               <div className="flex items-center space-x-2">
-                <p className="font-semibold">{comment.author.name}</p>
+                <Link href={`/profile/${comment.author.id}`} className="hover:underline">
+                    <p className="font-semibold">{comment.author.name}</p>
+                </Link>
                 <time dateTime={comment.createdAt} className="text-sm text-muted-foreground">
                     {format(new Date(comment.createdAt), 'MMM d, yyyy')}
                 </time>
