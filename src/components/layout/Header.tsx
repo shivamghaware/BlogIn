@@ -26,7 +26,7 @@ export default function Header() {
           {user ? (
             <UserNav />
           ) : (
-            <Link href="/api/auth/signin">
+            <Link href="/login">
               <Button size="sm">Sign In</Button>
             </Link>
           )}
