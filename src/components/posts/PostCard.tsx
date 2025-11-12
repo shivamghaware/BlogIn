@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { Post } from '@/lib/types';
@@ -29,7 +28,14 @@ export function PostCard({ post }: PostCardProps) {
       const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
       setIsBookmarked(savedPosts.includes(post.slug));
       setIsLiked(likedPosts.includes(post.slug));
-    }, [post.slug]);
+
+      const storedLikeCount = localStorage.getItem(`like-count-${post.slug}`);
+      if (storedLikeCount) {
+        setLikeCount(parseInt(storedLikeCount, 10));
+      } else {
+        setLikeCount(post.likes);
+      }
+    }, [post.slug, post.likes]);
 
     const getInitials = (name: string) => {
         const [firstName, lastName] = name.split(' ');
@@ -52,6 +58,7 @@ export function PostCard({ post }: PostCardProps) {
         }
         localStorage.setItem('savedPosts', JSON.stringify(savedPosts));
         setIsBookmarked(newIsBookmarked);
+        window.dispatchEvent(new Event('storage'));
 
         toast({
             title: newIsBookmarked ? 'Post saved!' : 'Post unsaved',
@@ -64,18 +71,24 @@ export function PostCard({ post }: PostCardProps) {
         e.stopPropagation();
         const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
         const newIsLiked = !isLiked;
+        let newLikeCount = likeCount;
+
         if (newIsLiked) {
             likedPosts.push(post.slug);
-            setLikeCount(prev => prev + 1);
+            newLikeCount = likeCount + 1;
         } else {
             const index = likedPosts.indexOf(post.slug);
             if (index > -1) {
                 likedPosts.splice(index, 1);
             }
-            setLikeCount(prev => prev - 1);
+            newLikeCount = Math.max(0, likeCount - 1);
         }
+        
         localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+        localStorage.setItem(`like-count-${post.slug}`, newLikeCount.toString());
         setIsLiked(newIsLiked);
+        setLikeCount(newLikeCount);
+        window.dispatchEvent(new Event('storage'));
 
         toast({
             title: newIsLiked ? 'Liked!' : 'Unliked',
@@ -84,50 +97,27 @@ export function PostCard({ post }: PostCardProps) {
 
   return (
      <article className="group">
+        <div className="flex items-center gap-2 text-sm mb-2">
+            <Link href={`/profile/${post.author.id}`} className="flex items-center gap-2 relative z-10">
+                <Avatar className="h-6 w-6">
+                    <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
+                    <AvatarFallback>{getInitials(post.author.name)}</AvatarFallback>
+                </Avatar>
+                <span className="font-medium hover:underline">{post.author.name}</span>
+            </Link>
+            <span className="text-muted-foreground">·</span>
+            <time dateTime={post.createdAt} className="text-muted-foreground">
+                {format(new Date(post.createdAt), 'MMM d, yyyy')}
+            </time>
+        </div>
         <Link href={`/posts/${post.slug}`} className="block">
           <div className="flex flex-col md:flex-row gap-8 w-full">
             <div className="flex-1">
-                <div className="flex items-center gap-2 text-sm">
-                <Link href={`/profile/${post.author.id}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-2 relative z-10">
-                    <Avatar className="h-6 w-6">
-                    <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
-                    <AvatarFallback>{getInitials(post.author.name)}</AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium hover:underline">{post.author.name}</span>
-                </Link>
-                <span className="text-muted-foreground">·</span>
-                <time dateTime={post.createdAt} className="text-muted-foreground">
-                    {format(new Date(post.createdAt), 'MMM d, yyyy')}
-                </time>
-                </div>
-                
                 <div className="mt-2">
                     <h2 className="text-2xl font-bold font-headline group-hover:text-primary transition-colors">
                         {post.title}
                     </h2>
                     <p className="mt-2 text-muted-foreground leading-relaxed">{snippet}</p>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        {post.tags.map((tag) => (
-                            <Badge key={tag} variant="secondary" className="font-normal">{tag}</Badge>
-                        ))}
-                        <span className="text-sm text-muted-foreground">· 5 min read</span>
-                    </div>
-                    <div className="flex items-center gap-1 relative z-10">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleLike}>
-                            <Heart className={cn('h-4 w-4', isLiked && 'fill-destructive text-destructive')} />
-                        </Button>
-                        <Link href={`/posts/${post.slug}#comments`} onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                                <MessageCircle className="h-4 w-4" />
-                            </Button>
-                        </Link>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleBookmark}>
-                            <Bookmark className={cn('h-4 w-4', isBookmarked && 'fill-primary text-primary')} />
-                        </Button>
-                    </div>
                 </div>
             </div>
             <div className="w-full md:w-48 lg:w-56 aspect-[4/3] relative shrink-0">
@@ -142,6 +132,29 @@ export function PostCard({ post }: PostCardProps) {
             </div>
           </div>
         </Link>
+        <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                {post.tags.map((tag) => (
+                    <Link href={`/?tag=${tag}`} key={tag}>
+                        <Badge variant="secondary" className="font-normal">{tag}</Badge>
+                    </Link>
+                ))}
+                <span className="text-sm text-muted-foreground">· 5 min read</span>
+            </div>
+            <div className="flex items-center gap-1 relative z-10">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleLike}>
+                    <Heart className={cn('h-4 w-4', isLiked && 'fill-destructive text-destructive')} />
+                </Button>
+                <Link href={`/posts/${post.slug}#comments`}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                        <MessageCircle className="h-4 w-4" />
+                    </Button>
+                </Link>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleBookmark}>
+                    <Bookmark className={cn('h-4 w-4', isBookmarked && 'fill-primary text-primary')} />
+                </Button>
+            </div>
+        </div>
     </article>
   );
 }

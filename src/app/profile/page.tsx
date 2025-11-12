@@ -8,9 +8,10 @@ import { getMe, getPosts, getUsers } from '@/lib/data';
 import { Pen, Heart, Bookmark } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { User, Post } from '@/lib/types';
 import { UserListDialog } from '@/components/users/UserListDialog';
+import { useRouter } from 'next/navigation';
 
 
 export default function ProfilePage() {
@@ -18,46 +19,46 @@ export default function ProfilePage() {
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [likedPosts, setLikedPosts] = useState<Post[]>([]);
   const [savedPosts, setSavedPosts] = useState<Post[]>([]);
-  const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [followers, setFollowers] = useState<User[]>([]);
   const [following, setFollowing] = useState<User[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const router = useRouter();
+
+  const fetchData = useCallback(async () => {
+    const me = await getMe();
+    if (!me) {
+      router.push('/login');
+      return;
+    }
+    setUser(me);
+
+    const [allPosts, allUsers] = await Promise.all([getPosts(), getUsers()]);
+
+    setUserPosts(allPosts.filter((post) => post.author.id === me.id));
+    
+    const likedPostSlugs = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+    const savedPostSlugs = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+    
+    setLikedPosts(allPosts.filter(post => likedPostSlugs.includes(post.slug)));
+    setSavedPosts(allPosts.filter(post => savedPostSlugs.includes(post.slug)));
+
+    const followerIds = JSON.parse(localStorage.getItem(`followedBy-${me.id}`) || '[]');
+    setFollowers(allUsers.filter(u => followerIds.includes(u.id)));
+
+    const followingIds = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+    setFollowing(allUsers.filter(u => followingIds.includes(u.id)));
+  }, [router]);
 
   useEffect(() => {
-    async function fetchData() {
-      const me = await getMe();
-      setUser(me);
-
-      const posts = await getPosts();
-      setAllPosts(posts);
-
-      if (me) {
-        setUserPosts(posts.filter((post) => post.author.id === me.id));
-      }
-      const allUsersData = await getUsers();
-      setAllUsers(allUsersData);
-    }
     fetchData();
-  }, []);
 
-  useEffect(() => {
-    if (user && allPosts.length > 0) {
-      const likedPostSlugs = JSON.parse(localStorage.getItem('likedPosts') || '[]');
-      const savedPostSlugs = JSON.parse(localStorage.getItem('savedPosts') || '[]');
-      
-      setLikedPosts(allPosts.filter(post => likedPostSlugs.includes(post.slug)));
-      setSavedPosts(allPosts.filter(post => savedPostSlugs.includes(post.slug)));
-    }
-     if (user && allUsers.length > 0) {
-      // In a real app, this would be fetched from the backend.
-      // Here, we simulate it based on localStorage.
-      const followerIds = JSON.parse(localStorage.getItem(`followedBy-${user.id}`) || '[]');
-      setFollowers(allUsers.filter(u => followerIds.includes(u.id)));
+    window.addEventListener('storage', fetchData);
+    window.addEventListener('logout', fetchData);
 
-      const followingIds = JSON.parse(localStorage.getItem('followedUsers') || '[]');
-      setFollowing(allUsers.filter(u => followingIds.includes(u.id)));
-    }
-  }, [user, allPosts, allUsers]);
+    return () => {
+      window.removeEventListener('storage', fetchData);
+      window.removeEventListener('logout', fetchData);
+    };
+  }, [fetchData]);
 
   if (!user) {
     return <div>Loading...</div>;

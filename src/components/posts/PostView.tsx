@@ -7,11 +7,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Bookmark, Pen } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, Pen, Heading2, Heading3, Heading4, Bold, Italic } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { CommentSection } from '@/components/comments/CommentSection';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { getMe } from '@/lib/data';
@@ -30,34 +30,45 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
   const [isFollowing, setIsFollowing] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    async function fetchUserAndStatus() {
-      const me = await getMe();
-      setCurrentUser(me);
+  const fetchAndSetState = useCallback(async () => {
+    const me = await getMe();
+    setCurrentUser(me);
 
-      const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
-      setIsBookmarked(savedPosts.includes(post.slug));
+    const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+    setIsBookmarked(savedPosts.includes(post.slug));
 
-      const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
-      setIsLiked(likedPosts.includes(post.slug));
+    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+    setIsLiked(likedPosts.includes(post.slug));
 
-      const storedLikeCount = localStorage.getItem(`like-count-${post.slug}`);
-      if (storedLikeCount) {
-        setLikeCount(parseInt(storedLikeCount, 10));
-      } else {
-        setLikeCount(post.likes);
-      }
-      
-      if (me && post.author.id !== me.id) {
-        const followedUsers = JSON.parse(localStorage.getItem('followedUsers') || '[]');
-        setIsFollowing(followedUsers.includes(post.author.id));
-      }
+    const storedLikeCount = localStorage.getItem(`like-count-${post.slug}`);
+    if (storedLikeCount) {
+      setLikeCount(parseInt(storedLikeCount, 10));
+    } else {
+      setLikeCount(post.likes);
     }
-    fetchUserAndStatus();
+    
+    if (me && post.author.id !== me.id) {
+      const followedUsers = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+      setIsFollowing(followedUsers.includes(post.author.id));
+    }
   }, [post.slug, post.likes, post.author.id]);
 
 
+  useEffect(() => {
+    fetchAndSetState();
+
+    window.addEventListener('storage', fetchAndSetState);
+    window.addEventListener('logout', fetchAndSetState);
+    
+    return () => {
+        window.removeEventListener('storage', fetchAndSetState);
+        window.removeEventListener('logout', fetchAndSetState);
+    }
+  }, [fetchAndSetState]);
+
+
   const getInitials = (name: string) => {
+    if (!name) return '';
     const [firstName, lastName] = name.split(' ');
     return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
   };
@@ -75,6 +86,8 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
     }
     localStorage.setItem('savedPosts', JSON.stringify(savedPosts));
     setIsBookmarked(newIsBookmarked);
+    window.dispatchEvent(new Event('storage'));
+
 
     toast({
         title: newIsBookmarked ? 'Post saved!' : 'Post unsaved',
@@ -95,13 +108,14 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
           if (index > -1) {
               likedPosts.splice(index, 1);
           }
-          newLikeCount = likeCount - 1;
+          newLikeCount = Math.max(0, likeCount - 1);
       }
       
       localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
       localStorage.setItem(`like-count-${post.slug}`, newLikeCount.toString());
       setIsLiked(newIsLiked);
       setLikeCount(newLikeCount);
+      window.dispatchEvent(new Event('storage'));
 
       toast({
           title: newIsLiked ? 'Liked!' : 'Unliked',
@@ -113,8 +127,8 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
         toast({ title: 'Please log in to follow users.', variant: 'destructive' });
         return;
     }
-    const followedUsersKey = 'followedUsers';
-    const userFollowersKey = `followedBy-${post.author.id}`;
+    const followedUsersKey = 'followedUsers'; // Current user's following list
+    const userFollowersKey = `followedBy-${post.author.id}`; // The displayed user's followers list
 
     let followedUsers: string[] = JSON.parse(localStorage.getItem(followedUsersKey) || '[]');
     let userFollowers: string[] = JSON.parse(localStorage.getItem(userFollowersKey) || '[]');
@@ -132,6 +146,8 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
     localStorage.setItem(followedUsersKey, JSON.stringify(followedUsers));
     localStorage.setItem(userFollowersKey, JSON.stringify(userFollowers));
     setIsFollowing(newIsFollowing);
+    window.dispatchEvent(new Event('storage'));
+
 
     toast({
         title: newIsFollowing ? `Followed ${post.author.name}` : `Unfollowed ${post.author.name}`,
@@ -143,6 +159,30 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
   };
   
   const isOwnPost = currentUser?.id === post.author.id;
+
+  const renderContent = () => {
+    return post.content.split('\n').map((paragraph, index) => {
+      if (paragraph.startsWith('#### ')) {
+        return <h4 key={index} className="font-headline font-bold text-xl mt-6 mb-3">{paragraph.replace('#### ', '')}</h4>
+      }
+      if (paragraph.startsWith('### ')) {
+        return <h3 key={index} className="font-headline font-bold text-2xl mt-8 mb-4">{paragraph.replace('### ', '')}</h3>
+      }
+      if (paragraph.startsWith('## ')) {
+        return <h2 key={index} className="font-headline font-bold text-3xl mt-10 mb-5">{paragraph.replace('## ', '')}</h2>
+      }
+
+      // Handle bold and italic
+      let processedPara = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      processedPara = processedPara.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      
+      if (paragraph.trim() === '') {
+        return <div key={index} className="h-4"></div>; // Creates a space for empty lines
+      }
+
+      return <p key={index} dangerouslySetInnerHTML={{ __html: processedPara }} />;
+    });
+  };
 
   return (
     <article>
@@ -216,18 +256,7 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
       </div>
 
       <div className="prose prose-lg dark:prose-invert max-w-none text-foreground text-lg leading-relaxed font-body">
-        {post.content.split('\n\n').map((paragraph, index) => {
-            if (paragraph.startsWith('#### ')) {
-                 return <h4 key={index} className="font-headline font-bold text-xl mt-6 mb-3">{paragraph.replace('#### ', '')}</h4>
-            }
-            if (paragraph.startsWith('### ')) {
-                 return <h3 key={index} className="font-headline font-bold text-2xl mt-8 mb-4">{paragraph.replace('### ', '')}</h3>
-            }
-            if (paragraph.startsWith('## ')) {
-                 return <h2 key={index} className="font-headline font-bold text-3xl mt-10 mb-5">{paragraph.replace('## ', '')}</h2>
-            }
-            return <p key={index}>{paragraph}</p>
-        })}
+        {renderContent()}
       </div>
       
       <div className="mt-12">

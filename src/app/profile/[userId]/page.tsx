@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/posts/PostCard';
@@ -10,6 +10,8 @@ import type { Post, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { notFound } from 'next/navigation';
 import { UserListDialog } from '@/components/users/UserListDialog';
+import Link from 'next/link';
+import { Pen } from 'lucide-react';
 
 type UserProfilePageProps = {
     params: {
@@ -26,61 +28,68 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
   const { toast } = useToast();
   const [followers, setFollowers] = useState<User[]>([]);
   const [following, setFollowing] = useState<User[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
 
+  const getInitials = (name: string) => {
+    if(!name) return '';
+    const [firstName, lastName] = name.split(' ');
+    return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
+  };
+  
+  const isOwnProfile = currentUser?.id === user?.id;
 
-  useEffect(() => {
-    async function fetchData() {
-      const [fetchedUser, me, allPostsData, allUsersData] = await Promise.all([
-          getUser(userId),
-          getMe(),
-          getPosts(),
-          getUsers()
-      ]);
+  const fetchData = useCallback(async () => {
+    const [fetchedUser, me, allPostsData, allUsersData] = await Promise.all([
+        getUser(userId),
+        getMe(),
+        getPosts(),
+        getUsers()
+    ]);
 
-      if (!fetchedUser) {
-        notFound();
-        return;
-      }
-      setUser(fetchedUser);
-      setCurrentUser(me);
-      setAllUsers(allUsersData);
-      setUserPosts(allPostsData.filter((post) => post.author.id === fetchedUser.id));
-
-      if (me && fetchedUser.id !== me.id) {
-          const followedUsers = JSON.parse(localStorage.getItem('followedUsers') || '[]');
-          setIsFollowing(followedUsers.includes(fetchedUser.id));
-      }
+    if (!fetchedUser) {
+      notFound();
+      return;
     }
-    fetchData();
+    setUser(fetchedUser);
+    setCurrentUser(me);
+    setUserPosts(allPostsData.filter((post) => post.author.id === fetchedUser.id));
+
+    // Following state
+    if (me && fetchedUser.id !== me.id) {
+        const followedUsers = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+        setIsFollowing(followedUsers.includes(fetchedUser.id));
+    }
+
+    // Followers list for the displayed user
+    const allFollowedRelations: Record<string, string[]> = allUsersData.reduce((acc, u) => {
+        const followedBy = JSON.parse(localStorage.getItem(`followedBy-${u.id}`) || '[]');
+        return {...acc, [u.id]: followedBy };
+    }, {});
+
+    const userFollowersIds = allFollowedRelations[fetchedUser.id] || [];
+    setFollowers(allUsersData.filter(u => userFollowersIds.includes(u.id)));
+
+    // Following list for the displayed user
+    if (me && fetchedUser.id === me.id) {
+        const userFollowingIds = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+        setFollowing(allUsersData.filter(u => userFollowingIds.includes(u.id)));
+    } else {
+        // This is tricky to simulate without a real backend. We'll assume we can't see other users' following lists.
+        setFollowing([]);
+    }
   }, [userId]);
 
+
   useEffect(() => {
-    if (user && allUsers.length > 0) {
-      const allFollowedRelations: Record<string, string[]> = {};
-      allUsers.forEach(u => {
-          const followedBy = JSON.parse(localStorage.getItem(`followedBy-${u.id}`) || '[]');
-          allFollowedRelations[u.id] = followedBy;
-      });
-      
-      const userFollowersIds = allFollowedRelations[user.id] || [];
-      setFollowers(allUsers.filter(u => userFollowersIds.includes(u.id)));
+    fetchData();
+    window.addEventListener('storage', fetchData);
+    window.addEventListener('logout', fetchData);
 
-      const userFollowingIds = JSON.parse(localStorage.getItem('followedUsers') || '[]');
-      const userIsFollowing = allUsers.filter(u => userFollowingIds.includes(u.id));
-
-      //This part is tricky in simulation, we can only see current user's following
-      //So for other users, we will show an empty following list unless we simulate it differently
-       if (currentUser && user.id === currentUser.id) {
-           setFollowing(userIsFollowing);
-       } else {
-           // For other users, we'd need their "followedUsers" list.
-           // Since we only store the current user's, this will be empty.
-           const otherUserFollowing = JSON.parse(localStorage.getItem(`followedBy-other-${user.id}`) || '[]');
-            setFollowing(allUsers.filter(u => otherUserFollowing.includes(u.id)));
-       }
+    return () => {
+        window.removeEventListener('storage', fetchData);
+        window.removeEventListener('logout', fetchData);
     }
-  }, [user, allUsers, currentUser]);
+  }, [fetchData]);
+
 
   const handleFollowToggle = () => {
     if (!user || !currentUser) {
@@ -111,21 +120,13 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
     
     setIsFollowing(newIsFollowing);
 
-    setUser(prevUser => {
-        if (!prevUser) return null;
-        const newFollowersCount = newIsFollowing ? prevUser.followersCount + 1 : Math.max(0, prevUser.followersCount - 1);
-        setFollowers(prevFollowers => {
-             if(newIsFollowing) {
-                 return [...prevFollowers, currentUser];
-             } else {
-                 return prevFollowers.filter(f => f.id !== currentUser.id);
-             }
-        });
-        return {
-            ...prevUser,
-            followersCount: newFollowersCount,
-        }
-    });
+    if (newIsFollowing) {
+      setFollowers(prev => [...prev, currentUser]);
+    } else {
+      setFollowers(prev => prev.filter(f => f.id !== currentUser.id));
+    }
+    
+    window.dispatchEvent(new Event('storage'));
 
     toast({
         title: newIsFollowing ? `Followed ${user.name}` : `Unfollowed ${user.name}`,
@@ -135,13 +136,6 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
   if (user === null) {
       return <div>Loading profile...</div>;
   }
-
-  const getInitials = (name: string) => {
-    const [firstName, lastName] = name.split(' ');
-    return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
-  };
-  
-  const isOwnProfile = currentUser?.id === user.id;
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
