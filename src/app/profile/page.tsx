@@ -3,13 +3,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/posts/PostCard';
 import { getMe, getPosts } from '@/lib/data';
-import { Pen } from 'lucide-react';
+import { Pen, Heart, Bookmark } from 'lucide-react';
 import Link from 'next/link';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default async function ProfilePage() {
   const user = await getMe();
   const allPosts = await getPosts();
   const userPosts = allPosts.filter((post) => post.author.id === user.id);
+  
+  // Mock data for liked and saved posts as this is not stored in the backend
+  const likedPosts = allPosts.slice(0, 2);
+  const savedPosts = allPosts.slice(1, 3);
 
   const getInitials = (name: string) => {
     const [firstName, lastName] = name.split(' ');
@@ -40,21 +45,61 @@ export default async function ProfilePage() {
         </header>
 
         <div className="border-t pt-8">
-          <h2 className="text-2xl font-bold font-headline mb-6">Your Posts</h2>
-          {userPosts.length > 0 ? (
-            <div className="grid gap-16">
-              {userPosts.map((post) => (
-                <PostCard key={post.slug} post={post} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16 border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">You haven&apos;t written any posts yet.</p>
-                <Button variant="link" className="mt-2">
-                    <a href="/new-post">Write your first post</a>
-                </Button>
-            </div>
-          )}
+            <Tabs defaultValue="posts" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-8">
+                    <TabsTrigger value="posts">Your Posts</TabsTrigger>
+                    <TabsTrigger value="likes">
+                        <Heart className="mr-2 h-4 w-4" />
+                        Likes
+                    </TabsTrigger>
+                    <TabsTrigger value="saved">
+                        <Bookmark className="mr-2 h-4 w-4" />
+                        Saved
+                    </TabsTrigger>
+                </TabsList>
+                <TabsContent value="posts">
+                    {userPosts.length > 0 ? (
+                        <div className="grid gap-16">
+                        {userPosts.map((post) => (
+                            <PostCard key={post.slug} post={post} />
+                        ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">You haven&apos;t written any posts yet.</p>
+                            <Button asChild variant="link" className="mt-2">
+                                <Link href="/new-post">Write your first post</Link>
+                            </Button>
+                        </div>
+                    )}
+                </TabsContent>
+                <TabsContent value="likes">
+                    {likedPosts.length > 0 ? (
+                            <div className="grid gap-16">
+                            {likedPosts.map((post) => (
+                                <PostCard key={post.slug} post={post} />
+                            ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">You haven&apos;t liked any posts yet.</p>
+                            </div>
+                        )}
+                </TabsContent>
+                <TabsContent value="saved">
+                {savedPosts.length > 0 ? (
+                        <div className="grid gap-16">
+                        {savedPosts.map((post) => (
+                            <PostCard key={post.slug} post={post} />
+                        ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">You haven&apos;t saved any posts yet.</p>
+                        </div>
+                    )}
+                </TabsContent>
+            </Tabs>
         </div>
       </div>
     </div>
