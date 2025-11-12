@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/posts/PostCard';
 import { getMe, getPosts } from '@/lib/data';
 import { Pen } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function ProfilePage() {
   const user = await getMe();
@@ -29,10 +30,12 @@ export default async function ProfilePage() {
             <h1 className="text-4xl font-bold font-headline">{user.name}</h1>
             <p className="mt-2 text-muted-foreground">{user.email}</p>
             <p className="mt-4 max-w-xl text-lg">{user.bio}</p>
-            <Button variant="outline" className="mt-4">
-              <Pen className="mr-2 h-4 w-4" />
-              Edit Profile
-            </Button>
+            <Link href="/profile/edit">
+                <Button variant="outline" className="mt-4">
+                <Pen className="mr-2 h-4 w-4" />
+                Edit Profile
+                </Button>
+            </Link>
           </div>
         </header>
 
