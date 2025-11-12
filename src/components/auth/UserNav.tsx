@@ -12,17 +12,30 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
+import { getMe } from '@/lib/data';
+import { useEffect, useState } from 'react';
+import type { User } from '@/lib/types';
 
 export function UserNav() {
-  // In a real app, you'd fetch user data.
-  const user = {
-    name: 'Elena Petrova',
-    email: 'elena@example.com',
-    avatarUrl: 'https://picsum.photos/seed/201/40/40',
-  };
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    async function fetchUser() {
+      const userData = await getMe();
+      setUser(userData);
+    }
+    fetchUser();
+  }, []);
+
   const getInitials = (name: string) => {
     const [firstName, lastName] = name.split(' ');
     return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
+  }
+
+  if (!user) {
+    return (
+      <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+    );
   }
 
   return (

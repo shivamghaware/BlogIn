@@ -163,7 +163,7 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
               </time>
             </div>
           </div>
-          {!isOwnPost && (
+          {!isOwnPost && currentUser && (
             <Button variant={isFollowing ? 'default' : 'outline'} onClick={handleFollowToggle}>
               {isFollowing ? 'Following' : 'Follow'}
             </Button>

@@ -1,27 +1,33 @@
+'use client';
+
 import type { Comment, User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { CommentForm } from './CommentForm';
+import { useState, useEffect } from 'react';
+import { getMe } from '@/lib/data';
 
 type CommentSectionProps = {
   comments: Comment[];
   onCommentSubmit: (newComment: Comment) => void;
 };
 
-// This would typically come from an authentication context
-const currentUser: User = { 
-  id: 'user-1', 
-  name: 'Elena Petrova', 
-  email: 'elena@example.com', 
-  avatarUrl: 'https://picsum.photos/seed/201/40/40' 
-};
-
 export function CommentSection({ comments, onCommentSubmit }: CommentSectionProps) {
-    const getInitials = (name: string) => {
-        const [firstName, lastName] = name.split(' ');
-        return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    async function fetchUser() {
+      const user = await getMe();
+      setCurrentUser(user);
     }
+    fetchUser();
+  }, []);
+
+  const getInitials = (name: string) => {
+    const [firstName, lastName] = name.split(' ');
+    return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
+  }
   return (
     <section>
       <h2 className="text-2xl font-bold font-headline mb-6">
@@ -29,7 +35,13 @@ export function CommentSection({ comments, onCommentSubmit }: CommentSectionProp
       </h2>
 
       <div className="mb-8">
-        <CommentForm currentUser={currentUser} onCommentSubmit={onCommentSubmit} />
+        {currentUser ? (
+          <CommentForm currentUser={currentUser} onCommentSubmit={onCommentSubmit} />
+        ) : (
+          <div className="p-4 border rounded-lg text-center text-muted-foreground">
+            You must be logged in to comment.
+          </div>
+        )}
       </div>
 
       <div className="space-y-8">

@@ -6,12 +6,22 @@ import { Button } from '@/components/ui/button';
 import { UserNav } from '@/components/auth/UserNav';
 import { PenSquare, Search } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getMe } from '@/lib/data';
 
 export default function Header() {
-  // In a real app, you'd get the user session here
-  const user = true; // Placeholder for logged-in state
+  const [user, setUser] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    async function checkUser() {
+      // In a real app with auth, you'd check a session.
+      // Here, we'll see if we can get a 'me' user.
+      const currentUser = await getMe();
+      setUser(!!currentUser);
+    }
+    checkUser();
+  }, []);
 
   return (
     <>
