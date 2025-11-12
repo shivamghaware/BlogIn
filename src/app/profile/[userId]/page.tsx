@@ -17,6 +17,7 @@ type UserProfilePageProps = {
 };
 
 export default function UserProfilePage({ params }: UserProfilePageProps) {
+  const { userId } = params;
   const [user, setUser] = useState<User | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
@@ -25,7 +26,7 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
 
   useEffect(() => {
     async function fetchData() {
-      const fetchedUser = await getUser(params.userId);
+      const fetchedUser = await getUser(userId);
       if (!fetchedUser) {
         // This will trigger the not-found page. We can't use notFound() directly in useEffect.
         // A better approach in a real app would be to handle this state in the UI.
@@ -46,7 +47,7 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
       }
     }
     fetchData();
-  }, [params.userId]);
+  }, [userId]);
 
 
   const handleFollowToggle = () => {
