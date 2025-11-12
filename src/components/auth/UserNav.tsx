@@ -56,9 +56,11 @@ export function UserNav() {
               New Post
             </DropdownMenuItem>
           </Link>
-          <DropdownMenuItem>
-            Settings
-          </DropdownMenuItem>
+          <Link href="/settings">
+            <DropdownMenuItem>
+              Settings
+            </DropdownMenuItem>
+          </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
