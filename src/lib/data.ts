@@ -49,11 +49,11 @@ const initialPosts: Post[] = [
 
 const initialComments: Record<string, Comment[]> = {
   'the-art-of-minimalism': [
-    { id: 'comment-1', text: 'Great article! This is the inspiration I needed to declutter my workspace.', author: initialUsers[0], createdAt: '2024-05-15T11:00:00Z' },
-    { id: 'comment-2', text: 'Digital minimalism is something I\'ve been trying to practice. It\'s tough but so rewarding.', author: initialUsers[1], createdAt: '2024-05-15T12:30:00Z' },
+    { id: 'comment-1', text: 'Great article! This is the inspiration I needed to declutter my workspace.', author: initialUsers[0], createdAt: '2024-05-15T11:00:00Z', postSlug: 'the-art-of-minimalism' },
+    { id: 'comment-2', text: 'Digital minimalism is something I\'ve been trying to practice. It\'s tough but so rewarding.', author: initialUsers[1], createdAt: '2024-05-15T12:30:00Z', postSlug: 'the-art-of-minimalism' },
   ],
   'exploring-the-unknown': [
-    { id: 'comment-3', text: 'Fascinating read! The idea of human-AI collaboration is so exciting.', author: initialUsers[2], createdAt: '2024-05-14T15:00:00Z' },
+    { id: 'comment-3', text: 'Fascinating read! The idea of human-AI collaboration is so exciting.', author: initialUsers[2], createdAt: '2024-05-14T15:00:00Z', postSlug: 'exploring-the-unknown' },
   ],
   'a-walk-in-nature': [],
 };
@@ -111,8 +111,21 @@ export async function getPost(slug: string): Promise<Post | undefined> {
 export async function getComments(slug: string): Promise<Comment[]> {
     return new Promise((resolve) => {
     const comments = getLocalStorage('comments', initialComments);
-    setTimeout(() => resolve(comments[slug] || []), 50);
+    setTimeout(() => resolve((comments[slug] || []).map(c => ({...c, postSlug: slug }))), 50);
   });
+}
+
+export async function getAllComments(): Promise<Comment[]> {
+    return new Promise((resolve) => {
+        const allCommentsData = getLocalStorage('comments', initialComments);
+        const allComments = Object.entries(allCommentsData).flatMap(([slug, comments]) => 
+            (comments as Comment[]).map(comment => ({
+                ...comment,
+                postSlug: slug,
+            }))
+        );
+        setTimeout(() => resolve(allComments), 50);
+    });
 }
 
 export async function getMe(): Promise<User | null> {
@@ -141,7 +154,7 @@ export async function loginUser(email: string): Promise<User | null> {
 export async function signupUser(name: string, email: string): Promise<User> {
     return new Promise((resolve) => {
         setTimeout(() => {
-            const users = getLocalStorage('users', initialUsers);
+            let users = getLocalStorage('users', initialUsers);
             const newUser: User = {
                 id: `user-${Date.now()}`,
                 name,
@@ -199,7 +212,7 @@ export async function getUser(id: string): Promise<User | undefined> {
   return new Promise((resolve) => {
     setTimeout(() => {
         const users = getLocalStorage('users', initialUsers);
-        resolve(users.find((u: User) => u.id === id))
+        resolve(users.find((u: User) => u.id === id));
     }, 50);
   });
 }

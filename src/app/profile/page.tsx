@@ -4,14 +4,15 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/posts/PostCard';
-import { getMe, getPosts, getUsers } from '@/lib/data';
-import { Pen, Heart, Bookmark } from 'lucide-react';
+import { getMe, getPosts, getUsers, getAllComments } from '@/lib/data';
+import { Pen, Heart, Bookmark, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEffect, useState, useCallback } from 'react';
-import type { User, Post } from '@/lib/types';
+import type { User, Post, Comment } from '@/lib/types';
 import { UserListDialog } from '@/components/users/UserListDialog';
 import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
 
 
 export default function ProfilePage() {
@@ -19,6 +20,7 @@ export default function ProfilePage() {
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [likedPosts, setLikedPosts] = useState<Post[]>([]);
   const [savedPosts, setSavedPosts] = useState<Post[]>([]);
+  const [userComments, setUserComments] = useState<Comment[]>([]);
   const [followers, setFollowers] = useState<User[]>([]);
   const [following, setFollowing] = useState<User[]>([]);
   const router = useRouter();
@@ -31,7 +33,7 @@ export default function ProfilePage() {
     }
     setUser(me);
 
-    const [allPosts, allUsers] = await Promise.all([getPosts(), getUsers()]);
+    const [allPosts, allUsers, allComments] = await Promise.all([getPosts(), getUsers(), getAllComments()]);
 
     setUserPosts(allPosts.filter((post) => post.author.id === me.id));
     
@@ -40,6 +42,8 @@ export default function ProfilePage() {
     
     setLikedPosts(allPosts.filter(post => likedPostSlugs.includes(post.slug)));
     setSavedPosts(allPosts.filter(post => savedPostSlugs.includes(post.slug)));
+
+    setUserComments(allComments.filter(comment => comment.author.id === me.id));
 
     const followerIds = JSON.parse(localStorage.getItem(`followedBy-${me.id}`) || '[]');
     setFollowers(allUsers.filter(u => followerIds.includes(u.id)));
@@ -108,8 +112,12 @@ export default function ProfilePage() {
 
         <div className="border-t pt-8">
             <Tabs defaultValue="posts" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-8">
+                <TabsList className="grid w-full grid-cols-4 mb-8">
                     <TabsTrigger value="posts">Your Posts</TabsTrigger>
+                     <TabsTrigger value="activity">
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        Activity
+                    </TabsTrigger>
                     <TabsTrigger value="likes">
                         <Heart className="mr-2 h-4 w-4" />
                         Likes
@@ -132,6 +140,28 @@ export default function ProfilePage() {
                             <Button asChild variant="link" className="mt-2">
                                 <Link href="/new-post">Write your first post</Link>
                             </Button>
+                        </div>
+                    )}
+                </TabsContent>
+                 <TabsContent value="activity">
+                    {userComments.length > 0 ? (
+                        <div className="space-y-6">
+                        {userComments.map((comment) => (
+                           <div key={comment.id} className="p-4 border rounded-lg">
+                             <p className="text-muted-foreground">{comment.text}</p>
+                             <div className="text-sm text-muted-foreground mt-2">
+                               <span>Commented on </span>
+                               <Link href={`/p/${comment.postSlug}#comments`} className="underline hover:text-foreground">
+                                 a post
+                               </Link>
+                               <span> · {format(new Date(comment.createdAt), 'MMM d, yyyy')}</span>
+                             </div>
+                           </div>
+                        ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">You haven&apos;t commented on any posts yet.</p>
                         </div>
                     )}
                 </TabsContent>

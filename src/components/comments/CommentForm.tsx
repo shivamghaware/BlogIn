@@ -10,10 +10,11 @@ import { useToast } from '@/hooks/use-toast';
 
 type CommentFormProps = {
   currentUser: User;
+  postSlug: string;
   onCommentSubmit: (newComment: Comment) => void;
 };
 
-export function CommentForm({ currentUser, onCommentSubmit }: CommentFormProps) {
+export function CommentForm({ currentUser, postSlug, onCommentSubmit }: CommentFormProps) {
   const [commentText, setCommentText] = useState('');
   const { toast } = useToast();
 
@@ -28,6 +29,7 @@ export function CommentForm({ currentUser, onCommentSubmit }: CommentFormProps) 
       text: commentText,
       author: currentUser,
       createdAt: new Date().toISOString(),
+      postSlug: postSlug,
     };
 
     // In a real app, you would send this to a server

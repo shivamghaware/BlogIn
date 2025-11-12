@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Bookmark, Pen, Heading2, Heading3, Heading4, Bold, Italic } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, Pen } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { CommentSection } from '@/components/comments/CommentSection';
 import Link from 'next/link';
@@ -272,7 +272,7 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
       <Separator className="my-12" />
 
       <div id="comments">
-        <CommentSection comments={comments} onCommentSubmit={handleCommentSubmit} />
+        <CommentSection postSlug={post.slug} comments={comments} onCommentSubmit={handleCommentSubmit} />
       </div>
     </article>
   );

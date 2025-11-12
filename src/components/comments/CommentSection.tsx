@@ -10,10 +10,11 @@ import { getMe } from '@/lib/data';
 
 type CommentSectionProps = {
   comments: Comment[];
+  postSlug: string;
   onCommentSubmit: (newComment: Comment) => void;
 };
 
-export function CommentSection({ comments, onCommentSubmit }: CommentSectionProps) {
+export function CommentSection({ comments, postSlug, onCommentSubmit }: CommentSectionProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -36,7 +37,7 @@ export function CommentSection({ comments, onCommentSubmit }: CommentSectionProp
 
       <div className="mb-8">
         {currentUser ? (
-          <CommentForm currentUser={currentUser} onCommentSubmit={onCommentSubmit} />
+          <CommentForm currentUser={currentUser} postSlug={postSlug} onCommentSubmit={onCommentSubmit} />
         ) : (
           <div className="p-4 border rounded-lg text-center text-muted-foreground">
             You must be logged in to comment.
