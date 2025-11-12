@@ -1,4 +1,6 @@
 
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/posts/PostCard';
@@ -6,15 +8,46 @@ import { getMe, getPosts } from '@/lib/data';
 import { Pen, Heart, Bookmark } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useEffect, useState } from 'react';
+import type { User, Post } from '@/lib/types';
 
-export default async function ProfilePage() {
-  const user = await getMe();
-  const allPosts = await getPosts();
-  const userPosts = allPosts.filter((post) => post.author.id === user.id);
-  
-  // Mock data for liked and saved posts as this is not stored in the backend
-  const likedPosts = allPosts.slice(0, 2);
-  const savedPosts = allPosts.slice(1, 3);
+
+export default function ProfilePage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [likedPosts, setLikedPosts] = useState<Post[]>([]);
+  const [savedPosts, setSavedPosts] = useState<Post[]>([]);
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      const me = await getMe();
+      setUser(me);
+
+      const posts = await getPosts();
+      setAllPosts(posts);
+
+      if (me) {
+        setUserPosts(posts.filter((post) => post.author.id === me.id));
+      }
+    }
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (allPosts.length > 0) {
+      const likedPostSlugs = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+      const savedPostSlugs = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+      
+      setLikedPosts(allPosts.filter(post => likedPostSlugs.includes(post.slug)));
+      setSavedPosts(allPosts.filter(post => savedPostSlugs.includes(post.slug)));
+    }
+  }, [allPosts]);
+
+  if (!user) {
+    // You can return a loading spinner here
+    return <div>Loading...</div>;
+  }
 
   const getInitials = (name: string) => {
     const [firstName, lastName] = name.split(' ');

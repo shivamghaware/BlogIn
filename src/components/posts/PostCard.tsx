@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Bookmark, MessageCircle, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +23,13 @@ export function PostCard({ post }: PostCardProps) {
     const [isLiked, setIsLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(post.likes);
 
+    useEffect(() => {
+      const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+      const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+      setIsBookmarked(savedPosts.includes(post.slug));
+      setIsLiked(likedPosts.includes(post.slug));
+    }, [post.slug]);
+
     const getInitials = (name: string) => {
         const [firstName, lastName] = name.split(' ');
         return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
@@ -30,20 +37,45 @@ export function PostCard({ post }: PostCardProps) {
     const snippet = post.content.split('\n\n')[0].substring(0, 150) + '...';
 
     const handleBookmark = () => {
-        setIsBookmarked(!isBookmarked);
+        const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+        const newIsBookmarked = !isBookmarked;
+        if (newIsBookmarked) {
+          savedPosts.push(post.slug);
+        } else {
+          const index = savedPosts.indexOf(post.slug);
+          if (index > -1) {
+            savedPosts.splice(index, 1);
+          }
+        }
+        localStorage.setItem('savedPosts', JSON.stringify(savedPosts));
+        setIsBookmarked(newIsBookmarked);
+
         toast({
-            title: isBookmarked ? 'Post unsaved' : 'Post saved!',
-            description: isBookmarked ? 'The post has been removed from your saved list.' : 'You can find this post in your saved list.',
+            title: newIsBookmarked ? 'Post saved!' : 'Post unsaved',
+            description: newIsBookmarked ? 'You can find this post in your saved list.' : 'The post has been removed from your saved list.',
         });
     }
 
     const handleLike = () => {
-      setIsLiked(!isLiked);
-      setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-      toast({
-          title: isLiked ? 'Unliked' : 'Liked!',
-      });
-  }
+        const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+        const newIsLiked = !isLiked;
+        if (newIsLiked) {
+            likedPosts.push(post.slug);
+            setLikeCount(prev => prev + 1);
+        } else {
+            const index = likedPosts.indexOf(post.slug);
+            if (index > -1) {
+                likedPosts.splice(index, 1);
+            }
+            setLikeCount(prev => prev - 1);
+        }
+        localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+        setIsLiked(newIsLiked);
+
+        toast({
+            title: newIsLiked ? 'Liked!' : 'Unliked',
+        });
+    }
 
   return (
     <article className="flex flex-col md:flex-row gap-8">

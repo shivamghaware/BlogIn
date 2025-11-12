@@ -11,7 +11,7 @@ import { Heart, MessageCircle, Bookmark } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { CommentSection } from '@/components/comments/CommentSection';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -27,25 +27,74 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
   const [likeCount, setLikeCount] = useState(post.likes);
   const [comments, setComments] = useState<Comment[]>(initialComments);
 
+  useEffect(() => {
+    const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+    setIsBookmarked(savedPosts.includes(post.slug));
+    const postIsLiked = likedPosts.includes(post.slug);
+    setIsLiked(postIsLiked);
+
+    const initialLikeCount = post.likes;
+    const storedLikeCount = parseInt(localStorage.getItem(`like-count-${post.slug}`) || initialLikeCount.toString(), 10);
+    
+    if (postIsLiked && storedLikeCount === initialLikeCount) {
+        setLikeCount(initialLikeCount + 1);
+    } else {
+        setLikeCount(storedLikeCount);
+    }
+
+  }, [post.slug, post.likes]);
+
+
   const getInitials = (name: string) => {
     const [firstName, lastName] = name.split(' ');
     return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
   };
   
   const handleBookmark = () => {
-    setIsBookmarked(!isBookmarked);
+    const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+    const newIsBookmarked = !isBookmarked;
+    if (newIsBookmarked) {
+      savedPosts.push(post.slug);
+    } else {
+      const index = savedPosts.indexOf(post.slug);
+      if (index > -1) {
+        savedPosts.splice(index, 1);
+      }
+    }
+    localStorage.setItem('savedPosts', JSON.stringify(savedPosts));
+    setIsBookmarked(newIsBookmarked);
+
     toast({
-        title: isBookmarked ? 'Post unsaved' : 'Post saved!',
-        description: isBookmarked ? 'The post has been removed from your saved list.' : 'You can find this post in your saved list.',
+        title: newIsBookmarked ? 'Post saved!' : 'Post unsaved',
+        description: newIsBookmarked ? 'You can find this post in your saved list.' : 'The post has been removed from your saved list.',
     });
   }
 
   const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-    toast({
-        title: isLiked ? 'Unliked' : 'Liked!',
-    });
+      const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+      const newIsLiked = !isLiked;
+      let newLikeCount = likeCount;
+
+      if (newIsLiked) {
+          likedPosts.push(post.slug);
+          newLikeCount = likeCount + 1;
+      } else {
+          const index = likedPosts.indexOf(post.slug);
+          if (index > -1) {
+              likedPosts.splice(index, 1);
+          }
+          newLikeCount = likeCount - 1;
+      }
+      
+      localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+      localStorage.setItem(`like-count-${post.slug}`, newLikeCount.toString());
+      setIsLiked(newIsLiked);
+      setLikeCount(newLikeCount);
+
+      toast({
+          title: newIsLiked ? 'Liked!' : 'Unliked',
+      });
   }
 
   const handleCommentSubmit = (newComment: Comment) => {
