@@ -25,14 +25,13 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useTransition } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { signupUser } from '@/lib/data';
 
 const signupFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email address.' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
-}).refine(data => data.password, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
 });
 
 
@@ -41,6 +40,7 @@ type SignupFormValues = z.infer<typeof signupFormSchema>;
 export function SignupForm() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupFormSchema),
@@ -53,15 +53,15 @@ export function SignupForm() {
   });
 
   function onSubmit(data: SignupFormValues) {
-    startTransition(() => {
-      // In a real app, you would handle user registration here.
-      // This is just a simulation.
+    startTransition(async () => {
+      const newUser = await signupUser(data.name, data.email);
       toast({
         title: 'Account Created',
         description: "You've successfully signed up!",
       });
-      // For now, we'll just show a toast and redirect.
-       window.location.href = '/';
+      window.dispatchEvent(new Event('storage'));
+      router.push('/');
+      router.refresh();
     });
   }
 

@@ -48,9 +48,11 @@ export function UserListDialog({ users, title, children }: UserListDialogProps) 
                     <p className="text-sm text-muted-foreground">{user.bio?.substring(0,30)}...</p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm">
-                  View
-                </Button>
+                <Link href={`/profile/${user.id}`}>
+                    <Button variant="outline" size="sm">
+                    View
+                    </Button>
+                </Link>
               </div>
             ))
           ) : (

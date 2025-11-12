@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,20 +13,45 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { getMe } from '@/lib/data';
+import { getMe, logoutUser } from '@/lib/data';
 import { useEffect, useState } from 'react';
 import type { User } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
 export function UserNav() {
   const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchUser() {
       const userData = await getMe();
       setUser(userData);
     }
+    
+    // Initial fetch
     fetchUser();
+
+    const handleStorageChange = () => {
+      fetchUser();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    // Custom event to handle logout from the same tab
+    window.addEventListener('logout', handleStorageChange);
+
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('logout', handleStorageChange);
+    };
   }, []);
+
+  const handleLogout = async () => {
+    await logoutUser();
+    setUser(null);
+    window.dispatchEvent(new Event('logout'));
+    router.push('/');
+  };
 
   const getInitials = (name: string) => {
     const [firstName, lastName] = name.split(' ');
@@ -34,7 +60,9 @@ export function UserNav() {
 
   if (!user) {
     return (
-      <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+      <Link href="/login">
+          <Button size="sm">Sign In</Button>
+      </Link>
     );
   }
 
@@ -76,7 +104,7 @@ export function UserNav() {
           </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
           Log out
         </DropdownMenuItem>
       </DropdownMenuContent>

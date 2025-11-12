@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Bookmark } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, Pen } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { CommentSection } from '@/components/comments/CommentSection';
 import Link from 'next/link';
@@ -39,16 +39,13 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
       setIsBookmarked(savedPosts.includes(post.slug));
 
       const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
-      const postIsLiked = likedPosts.includes(post.slug);
-      setIsLiked(postIsLiked);
+      setIsLiked(likedPosts.includes(post.slug));
 
-      const initialLikeCount = post.likes;
-      const storedLikeCount = parseInt(localStorage.getItem(`like-count-${post.slug}`) || initialLikeCount.toString(), 10);
-      
-      if (postIsLiked && storedLikeCount === initialLikeCount) {
-          setLikeCount(initialLikeCount + 1);
+      const storedLikeCount = localStorage.getItem(`like-count-${post.slug}`);
+      if (storedLikeCount) {
+        setLikeCount(parseInt(storedLikeCount, 10));
       } else {
-          setLikeCount(storedLikeCount);
+        setLikeCount(post.likes);
       }
       
       if (me && post.author.id !== me.id) {
@@ -112,19 +109,28 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
   }
 
   const handleFollowToggle = () => {
-    const followedUsers = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+    if (!currentUser) {
+        toast({ title: 'Please log in to follow users.', variant: 'destructive' });
+        return;
+    }
+    const followedUsersKey = 'followedUsers';
+    const userFollowersKey = `followedBy-${post.author.id}`;
+
+    let followedUsers: string[] = JSON.parse(localStorage.getItem(followedUsersKey) || '[]');
+    let userFollowers: string[] = JSON.parse(localStorage.getItem(userFollowersKey) || '[]');
+    
     const newIsFollowing = !isFollowing;
 
     if (newIsFollowing) {
-        followedUsers.push(post.author.id);
+        if (!followedUsers.includes(post.author.id)) followedUsers.push(post.author.id);
+        if (!userFollowers.includes(currentUser.id)) userFollowers.push(currentUser.id);
     } else {
-        const index = followedUsers.indexOf(post.author.id);
-        if (index > -1) {
-            followedUsers.splice(index, 1);
-        }
+        followedUsers = followedUsers.filter(id => id !== post.author.id);
+        userFollowers = userFollowers.filter(id => id !== currentUser.id);
     }
 
-    localStorage.setItem('followedUsers', JSON.stringify(followedUsers));
+    localStorage.setItem(followedUsersKey, JSON.stringify(followedUsers));
+    localStorage.setItem(userFollowersKey, JSON.stringify(userFollowers));
     setIsFollowing(newIsFollowing);
 
     toast({
@@ -163,7 +169,14 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
               </time>
             </div>
           </div>
-          {!isOwnPost && currentUser && (
+           {isOwnPost ? (
+            <Link href={`/posts/${post.slug}/edit`}>
+              <Button variant="outline">
+                <Pen className="mr-2 h-4 w-4" />
+                Edit Post
+              </Button>
+            </Link>
+          ) : currentUser && (
             <Button variant={isFollowing ? 'default' : 'outline'} onClick={handleFollowToggle}>
               {isFollowing ? 'Following' : 'Follow'}
             </Button>
@@ -204,8 +217,14 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
 
       <div className="prose prose-lg dark:prose-invert max-w-none text-foreground text-lg leading-relaxed font-body">
         {post.content.split('\n\n').map((paragraph, index) => {
+            if (paragraph.startsWith('#### ')) {
+                 return <h4 key={index} className="font-headline font-bold text-xl mt-6 mb-3">{paragraph.replace('#### ', '')}</h4>
+            }
             if (paragraph.startsWith('### ')) {
                  return <h3 key={index} className="font-headline font-bold text-2xl mt-8 mb-4">{paragraph.replace('### ', '')}</h3>
+            }
+            if (paragraph.startsWith('## ')) {
+                 return <h2 key={index} className="font-headline font-bold text-3xl mt-10 mb-5">{paragraph.replace('## ', '')}</h2>
             }
             return <p key={index}>{paragraph}</p>
         })}
@@ -213,9 +232,11 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
       
       <div className="mt-12">
         {post.tags.map((tag) => (
-          <Badge key={tag} variant="secondary" className="mr-2 mb-2 text-sm font-normal">
-            {tag}
-          </Badge>
+            <Link href={`/?tag=${tag}`} key={tag}>
+                <Badge variant="secondary" className="mr-2 mb-2 text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground">
+                    {tag}
+                </Badge>
+            </Link>
         ))}
       </div>
 

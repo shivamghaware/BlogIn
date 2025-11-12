@@ -31,49 +31,64 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
 
   useEffect(() => {
     async function fetchData() {
-      const fetchedUser = await getUser(userId);
+      const [fetchedUser, me, allPostsData, allUsersData] = await Promise.all([
+          getUser(userId),
+          getMe(),
+          getPosts(),
+          getUsers()
+      ]);
+
       if (!fetchedUser) {
-        setUser(null); 
+        notFound();
         return;
       }
       setUser(fetchedUser);
-
-      const me = await getMe();
       setCurrentUser(me);
-
-      const allPostsData = await getPosts();
+      setAllUsers(allUsersData);
       setUserPosts(allPostsData.filter((post) => post.author.id === fetchedUser.id));
 
       if (me && fetchedUser.id !== me.id) {
           const followedUsers = JSON.parse(localStorage.getItem('followedUsers') || '[]');
           setIsFollowing(followedUsers.includes(fetchedUser.id));
       }
-      
-      const allUsersData = await getUsers();
-      setAllUsers(allUsersData);
     }
     fetchData();
   }, [userId]);
 
   useEffect(() => {
     if (user && allUsers.length > 0) {
-      // In a real app, this would be fetched from the backend.
-      // Here, we simulate it based on who the current user follows.
-      const userFollowers: User[] = [];
-      if(currentUser && localStorage.getItem('followedUsers')?.includes(user.id)) {
-        userFollowers.push(currentUser);
-      }
-      setFollowers(userFollowers);
+      const allFollowedRelations: Record<string, string[]> = {};
+      allUsers.forEach(u => {
+          const followedBy = JSON.parse(localStorage.getItem(`followedBy-${u.id}`) || '[]');
+          allFollowedRelations[u.id] = followedBy;
+      });
+      
+      const userFollowersIds = allFollowedRelations[user.id] || [];
+      setFollowers(allUsers.filter(u => userFollowersIds.includes(u.id)));
 
-      // Simulate following list for the displayed user
-      const userFollowingIds = JSON.parse(localStorage.getItem(`followedBy-${user.id}`) || '[]');
-      const userFollowing = allUsers.filter(u => userFollowingIds.includes(u.id));
-      setFollowing(userFollowing);
+      const userFollowingIds = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+      const userIsFollowing = allUsers.filter(u => userFollowingIds.includes(u.id));
+
+      //This part is tricky in simulation, we can only see current user's following
+      //So for other users, we will show an empty following list unless we simulate it differently
+       if (currentUser && user.id === currentUser.id) {
+           setFollowing(userIsFollowing);
+       } else {
+           // For other users, we'd need their "followedUsers" list.
+           // Since we only store the current user's, this will be empty.
+           const otherUserFollowing = JSON.parse(localStorage.getItem(`followedBy-other-${user.id}`) || '[]');
+            setFollowing(allUsers.filter(u => otherUserFollowing.includes(u.id)));
+       }
     }
   }, [user, allUsers, currentUser]);
 
   const handleFollowToggle = () => {
-    if (!user || !currentUser) return;
+    if (!user || !currentUser) {
+        toast({ title: 'Please log in to follow users.', variant: 'destructive' });
+        return;
+    };
+    if (currentUser.id === user.id) return;
+
 
     const followedUsersKey = 'followedUsers'; // Current user's following list
     const userFollowersKey = `followedBy-${user.id}`; // The displayed user's followers list
@@ -98,9 +113,17 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
 
     setUser(prevUser => {
         if (!prevUser) return null;
+        const newFollowersCount = newIsFollowing ? prevUser.followersCount + 1 : Math.max(0, prevUser.followersCount - 1);
+        setFollowers(prevFollowers => {
+             if(newIsFollowing) {
+                 return [...prevFollowers, currentUser];
+             } else {
+                 return prevFollowers.filter(f => f.id !== currentUser.id);
+             }
+        });
         return {
             ...prevUser,
-            followersCount: newIsFollowing ? prevUser.followersCount + 1 : prevUser.followersCount - 1,
+            followersCount: newFollowersCount,
         }
     });
 
@@ -112,11 +135,6 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
   if (user === null) {
       return <div>Loading profile...</div>;
   }
-  
-  if (user === undefined) {
-      notFound();
-  }
-
 
   const getInitials = (name: string) => {
     const [firstName, lastName] = name.split(' ');
@@ -141,19 +159,26 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
             <div className="flex justify-center md:justify-start gap-4 mt-4">
               <UserListDialog title="Followers" users={followers}>
                 <button className="text-center">
-                  <p className="font-bold text-lg">{user.followersCount}</p>
+                  <p className="font-bold text-lg">{followers.length}</p>
                   <p className="text-sm text-muted-foreground">Followers</p>
                 </button>
               </UserListDialog>
               <UserListDialog title="Following" users={following}>
                 <button className="text-center">
-                  <p className="font-bold text-lg">{user.followingCount}</p>
+                  <p className="font-bold text-lg">{following.length}</p>
                   <p className="text-sm text-muted-foreground">Following</p>
                 </button>
               </UserListDialog>
             </div>
             <p className="mt-4 max-w-xl text-lg">{user.bio}</p>
-            {!isOwnProfile && currentUser && (
+            {isOwnProfile ? (
+                 <Link href="/profile/edit">
+                    <Button variant="outline" className="mt-4">
+                    <Pen className="mr-2 h-4 w-4" />
+                    Edit Profile
+                    </Button>
+                </Link>
+            ) : currentUser && (
                 <Button variant={isFollowing ? 'default' : 'outline'} className="mt-4" onClick={handleFollowToggle}>
                     {isFollowing ? 'Following' : 'Follow'}
                 </Button>

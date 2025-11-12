@@ -25,6 +25,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useTransition } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { loginUser } from '@/lib/data';
+
 
 const loginFormSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -36,6 +39,7 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 export function LoginForm() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -47,15 +51,24 @@ export function LoginForm() {
   });
 
   function onSubmit(data: LoginFormValues) {
-    startTransition(() => {
-      // In a real app, you would handle authentication here.
-      // This is just a simulation.
-      toast({
-        title: 'Login Successful',
-        description: 'Welcome back!',
-      });
-      // For now, we'll just show a toast and redirect.
-      window.location.href = '/';
+    startTransition(async () => {
+      const user = await loginUser(data.email);
+      
+      if (user) {
+        toast({
+          title: 'Login Successful',
+          description: `Welcome back, ${user.name}!`,
+        });
+        window.dispatchEvent(new Event('storage'));
+        router.push('/');
+        router.refresh();
+      } else {
+        toast({
+          title: 'Login Failed',
+          description: 'Invalid email or password.',
+          variant: 'destructive',
+        });
+      }
     });
   }
 

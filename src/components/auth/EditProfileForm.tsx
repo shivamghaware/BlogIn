@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -18,6 +19,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import type { User } from '@/lib/types';
 import { useTransition } from 'react';
+import { updateUser } from '@/lib/data';
+import { useRouter } from 'next/navigation';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -38,6 +41,7 @@ type EditProfileFormProps = {
 export function EditProfileForm({ user }: EditProfileFormProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -50,16 +54,20 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
   });
 
   function onSubmit(data: ProfileFormValues) {
-    startTransition(() => {
-      // In a real app, you would call a server action to update the user profile.
-      console.log('Updating profile with:', data);
+    startTransition(async () => {
+      const updatedUser = await updateUser({
+        ...user,
+        ...data,
+      });
       
       toast({
         title: 'Profile Updated',
         description: 'Your profile has been successfully updated.',
       });
-      // Optionally, redirect the user back to their profile page.
-      // For now, we'll just show a toast.
+
+      window.dispatchEvent(new Event('storage'));
+      router.push(`/profile/${user.id}`);
+      router.refresh();
     });
   }
 
