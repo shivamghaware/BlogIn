@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 type PostCardProps = {
   post: Post;
@@ -19,6 +20,7 @@ type PostCardProps = {
 
 export function PostCard({ post }: PostCardProps) {
     const { toast } = useToast();
+    const router = useRouter();
     const [isBookmarked, setIsBookmarked] = useState(false);
     const [isLiked, setIsLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(post.likes);
@@ -95,66 +97,69 @@ export function PostCard({ post }: PostCardProps) {
         });
     }
 
+    const handleNavigation = (e: React.MouseEvent, href: string) => {
+      e.stopPropagation();
+      router.push(href);
+    };
+
   return (
-     <article className="group">
-        <div className="flex items-center gap-2 text-sm mb-2">
-            <Link href={`/profile/${post.author.id}`} className="flex items-center gap-2 relative z-10">
-                <Avatar className="h-6 w-6">
-                    <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
-                    <AvatarFallback>{getInitials(post.author.name)}</AvatarFallback>
-                </Avatar>
-                <span className="font-medium hover:underline">{post.author.name}</span>
-            </Link>
-            <span className="text-muted-foreground">·</span>
-            <time dateTime={post.createdAt} className="text-muted-foreground">
-                {format(new Date(post.createdAt), 'MMM d, yyyy')}
-            </time>
-        </div>
-        <Link href={`/posts/${post.slug}`} className="block">
-          <div className="flex flex-col md:flex-row gap-8 w-full">
-            <div className="flex-1">
-                <div className="mt-2">
-                    <h2 className="text-2xl font-bold font-headline group-hover:text-primary transition-colors">
-                        {post.title}
-                    </h2>
-                    <p className="mt-2 text-muted-foreground leading-relaxed">{snippet}</p>
+     <Link href={`/posts/${post.slug}`} className="block group cursor-pointer">
+        <article>
+            <div className="flex items-center gap-2 text-sm mb-2">
+                <button onClick={(e) => handleNavigation(e, `/profile/${post.author.id}`)} className="flex items-center gap-2 relative z-10">
+                    <Avatar className="h-6 w-6">
+                        <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
+                        <AvatarFallback>{getInitials(post.author.name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium hover:underline">{post.author.name}</span>
+                </button>
+                <span className="text-muted-foreground">·</span>
+                <time dateTime={post.createdAt} className="text-muted-foreground">
+                    {format(new Date(post.createdAt), 'MMM d, yyyy')}
+                </time>
+            </div>
+            <div className="flex flex-col md:flex-row gap-8 w-full">
+                <div className="flex-1">
+                    <div className="mt-2">
+                        <h2 className="text-2xl font-bold font-headline group-hover:text-primary transition-colors">
+                            {post.title}
+                        </h2>
+                        <p className="mt-2 text-muted-foreground leading-relaxed">{snippet}</p>
+                    </div>
+                </div>
+                <div className="w-full md:w-48 lg:w-56 aspect-[4/3] relative shrink-0">
+                    <Image
+                        src={post.imageUrl}
+                        alt={post.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover rounded-md"
+                        data-ai-hint={post.imageHint}
+                    />
                 </div>
             </div>
-            <div className="w-full md:w-48 lg:w-56 aspect-[4/3] relative shrink-0">
-                <Image
-                    src={post.imageUrl}
-                    alt={post.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="object-cover rounded-md"
-                    data-ai-hint={post.imageHint}
-                />
-            </div>
-          </div>
-        </Link>
-        <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-                {post.tags.map((tag) => (
-                    <Link href={`/?tag=${tag}`} key={tag}>
-                        <Badge variant="secondary" className="font-normal">{tag}</Badge>
-                    </Link>
-                ))}
-                <span className="text-sm text-muted-foreground">· 5 min read</span>
-            </div>
-            <div className="flex items-center gap-1 relative z-10">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleLike}>
-                    <Heart className={cn('h-4 w-4', isLiked && 'fill-destructive text-destructive')} />
-                </Button>
-                <Link href={`/posts/${post.slug}#comments`}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+            <div className="mt-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    {post.tags.map((tag) => (
+                        <button key={tag} onClick={(e) => handleNavigation(e, `/?tag=${tag}`)}>
+                            <Badge variant="secondary" className="font-normal">{tag}</Badge>
+                        </button>
+                    ))}
+                    <span className="text-sm text-muted-foreground">· 5 min read</span>
+                </div>
+                <div className="flex items-center gap-1 relative z-10">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleLike}>
+                        <Heart className={cn('h-4 w-4', isLiked && 'fill-destructive text-destructive')} />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={(e) => handleNavigation(e, `/posts/${post.slug}#comments`)}>
                         <MessageCircle className="h-4 w-4" />
                     </Button>
-                </Link>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleBookmark}>
-                    <Bookmark className={cn('h-4 w-4', isBookmarked && 'fill-primary text-primary')} />
-                </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleBookmark}>
+                        <Bookmark className={cn('h-4 w-4', isBookmarked && 'fill-primary text-primary')} />
+                    </Button>
+                </div>
             </div>
-        </div>
-    </article>
+        </article>
+     </Link>
   );
 }
