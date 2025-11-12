@@ -1,7 +1,13 @@
+
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/posts/PostCard';
-import { getUser, getPosts } from '@/lib/data';
+import { getUser, getPosts, getMe } from '@/lib/data';
+import type { Post, User } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 import { notFound } from 'next/navigation';
 
 type UserProfilePageProps = {
@@ -10,20 +16,78 @@ type UserProfilePageProps = {
     };
 };
 
-export default async function UserProfilePage({ params }: UserProfilePageProps) {
-  const user = await getUser(params.userId);
+export default function UserProfilePage({ params }: UserProfilePageProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const { toast } = useToast();
 
-  if (!user) {
-    notFound();
+  useEffect(() => {
+    async function fetchData() {
+      const fetchedUser = await getUser(params.userId);
+      if (!fetchedUser) {
+        // This will trigger the not-found page. We can't use notFound() directly in useEffect.
+        // A better approach in a real app would be to handle this state in the UI.
+        setUser(null); 
+        return;
+      }
+      setUser(fetchedUser);
+
+      const me = await getMe();
+      setCurrentUser(me);
+
+      const allPosts = await getPosts();
+      setUserPosts(allPosts.filter((post) => post.author.id === fetchedUser.id));
+
+      if (me && fetchedUser.id !== me.id) {
+          const followedUsers = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+          setIsFollowing(followedUsers.includes(fetchedUser.id));
+      }
+    }
+    fetchData();
+  }, [params.userId]);
+
+
+  const handleFollowToggle = () => {
+    if (!user) return;
+
+    const followedUsers = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+    const newIsFollowing = !isFollowing;
+
+    if (newIsFollowing) {
+        followedUsers.push(user.id);
+    } else {
+        const index = followedUsers.indexOf(user.id);
+        if (index > -1) {
+            followedUsers.splice(index, 1);
+        }
+    }
+
+    localStorage.setItem('followedUsers', JSON.stringify(followedUsers));
+    setIsFollowing(newIsFollowing);
+
+    toast({
+        title: newIsFollowing ? `Followed ${user.name}` : `Unfollowed ${user.name}`,
+    });
+  };
+
+  if (user === null) {
+      // In a real app, you might show a loading skeleton here
+      return <div>Loading profile...</div>;
   }
   
-  const allPosts = await getPosts();
-  const userPosts = allPosts.filter((post) => post.author.id === user.id);
+  if (user === undefined) {
+      notFound();
+  }
+
 
   const getInitials = (name: string) => {
     const [firstName, lastName] = name.split(' ');
     return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
   };
+  
+  const isOwnProfile = currentUser?.id === user.id;
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -39,9 +103,11 @@ export default async function UserProfilePage({ params }: UserProfilePageProps) 
             <h1 className="text-4xl font-bold font-headline">{user.name}</h1>
             <p className="mt-2 text-muted-foreground">{user.email}</p>
             <p className="mt-4 max-w-xl text-lg">{user.bio}</p>
-            <Button variant="outline" className="mt-4">
-              Follow
-            </Button>
+            {!isOwnProfile && (
+                <Button variant={isFollowing ? 'default' : 'outline'} className="mt-4" onClick={handleFollowToggle}>
+                    {isFollowing ? 'Following' : 'Follow'}
+                </Button>
+            )}
           </div>
         </header>
 
@@ -63,11 +129,3 @@ export default async function UserProfilePage({ params }: UserProfilePageProps) 
     </div>
   );
 }
-
-// In a real app with a database, you would generate static paths like this:
-// export async function generateStaticParams() {
-//   const users = await getUsers();
-//   return users.map((user) => ({
-//     userId: user.id,
-//   }));
-// }

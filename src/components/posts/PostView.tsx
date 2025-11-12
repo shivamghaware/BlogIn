@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Post, Comment } from '@/lib/types';
+import type { Post, Comment, User } from '@/lib/types';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { getMe } from '@/lib/data';
 
 type PostViewProps = {
   post: Post;
@@ -26,24 +27,37 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes);
   const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
-    const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
-    setIsBookmarked(savedPosts.includes(post.slug));
-    const postIsLiked = likedPosts.includes(post.slug);
-    setIsLiked(postIsLiked);
+    async function fetchUserAndStatus() {
+      const me = await getMe();
+      setCurrentUser(me);
 
-    const initialLikeCount = post.likes;
-    const storedLikeCount = parseInt(localStorage.getItem(`like-count-${post.slug}`) || initialLikeCount.toString(), 10);
-    
-    if (postIsLiked && storedLikeCount === initialLikeCount) {
-        setLikeCount(initialLikeCount + 1);
-    } else {
-        setLikeCount(storedLikeCount);
+      const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+      setIsBookmarked(savedPosts.includes(post.slug));
+
+      const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+      const postIsLiked = likedPosts.includes(post.slug);
+      setIsLiked(postIsLiked);
+
+      const initialLikeCount = post.likes;
+      const storedLikeCount = parseInt(localStorage.getItem(`like-count-${post.slug}`) || initialLikeCount.toString(), 10);
+      
+      if (postIsLiked && storedLikeCount === initialLikeCount) {
+          setLikeCount(initialLikeCount + 1);
+      } else {
+          setLikeCount(storedLikeCount);
+      }
+      
+      if (me && post.author.id !== me.id) {
+        const followedUsers = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+        setIsFollowing(followedUsers.includes(post.author.id));
+      }
     }
-
-  }, [post.slug, post.likes]);
+    fetchUserAndStatus();
+  }, [post.slug, post.likes, post.author.id]);
 
 
   const getInitials = (name: string) => {
@@ -97,9 +111,32 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
       });
   }
 
+  const handleFollowToggle = () => {
+    const followedUsers = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+    const newIsFollowing = !isFollowing;
+
+    if (newIsFollowing) {
+        followedUsers.push(post.author.id);
+    } else {
+        const index = followedUsers.indexOf(post.author.id);
+        if (index > -1) {
+            followedUsers.splice(index, 1);
+        }
+    }
+
+    localStorage.setItem('followedUsers', JSON.stringify(followedUsers));
+    setIsFollowing(newIsFollowing);
+
+    toast({
+        title: newIsFollowing ? `Followed ${post.author.name}` : `Unfollowed ${post.author.name}`,
+    });
+  };
+
   const handleCommentSubmit = (newComment: Comment) => {
     setComments(prev => [newComment, ...prev]);
   };
+  
+  const isOwnPost = currentUser?.id === post.author.id;
 
   return (
     <article>
@@ -126,7 +163,11 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
               </time>
             </div>
           </div>
-          <Button variant="outline">Follow</Button>
+          {!isOwnPost && (
+            <Button variant={isFollowing ? 'default' : 'outline'} onClick={handleFollowToggle}>
+              {isFollowing ? 'Following' : 'Follow'}
+            </Button>
+          )}
         </div>
       </header>
 
