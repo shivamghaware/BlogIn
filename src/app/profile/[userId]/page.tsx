@@ -17,7 +17,8 @@ type UserProfilePageProps = {
     };
 };
 
-export default function UserProfilePage({ params: { userId } }: UserProfilePageProps) {
+export default function UserProfilePage({ params }: UserProfilePageProps) {
+  const { userId } = params;
   const [user, setUser] = useState<User | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
@@ -178,5 +179,3 @@ export default function UserProfilePage({ params: { userId } }: UserProfilePageP
     </div>
   );
 }
-
-    
