@@ -4,6 +4,8 @@ export type User = {
   email: string;
   avatarUrl: string;
   bio?: string;
+  followersCount: number;
+  followingCount: number;
 };
 
 export type Post = {

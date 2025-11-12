@@ -4,12 +4,13 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/posts/PostCard';
-import { getMe, getPosts } from '@/lib/data';
+import { getMe, getPosts, getUsers } from '@/lib/data';
 import { Pen, Heart, Bookmark } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEffect, useState } from 'react';
 import type { User, Post } from '@/lib/types';
+import { UserListDialog } from '@/components/users/UserListDialog';
 
 
 export default function ProfilePage() {
@@ -18,6 +19,9 @@ export default function ProfilePage() {
   const [likedPosts, setLikedPosts] = useState<Post[]>([]);
   const [savedPosts, setSavedPosts] = useState<Post[]>([]);
   const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [followers, setFollowers] = useState<User[]>([]);
+  const [following, setFollowing] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -30,22 +34,32 @@ export default function ProfilePage() {
       if (me) {
         setUserPosts(posts.filter((post) => post.author.id === me.id));
       }
+      const allUsersData = await getUsers();
+      setAllUsers(allUsersData);
     }
     fetchData();
   }, []);
 
   useEffect(() => {
-    if (allPosts.length > 0) {
+    if (user && allPosts.length > 0) {
       const likedPostSlugs = JSON.parse(localStorage.getItem('likedPosts') || '[]');
       const savedPostSlugs = JSON.parse(localStorage.getItem('savedPosts') || '[]');
       
       setLikedPosts(allPosts.filter(post => likedPostSlugs.includes(post.slug)));
       setSavedPosts(allPosts.filter(post => savedPostSlugs.includes(post.slug)));
     }
-  }, [allPosts]);
+     if (user && allUsers.length > 0) {
+      // In a real app, this would be fetched from the backend.
+      // Here, we simulate it based on localStorage.
+      const followerIds = JSON.parse(localStorage.getItem(`followedBy-${user.id}`) || '[]');
+      setFollowers(allUsers.filter(u => followerIds.includes(u.id)));
+
+      const followingIds = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+      setFollowing(allUsers.filter(u => followingIds.includes(u.id)));
+    }
+  }, [user, allPosts, allUsers]);
 
   if (!user) {
-    // You can return a loading spinner here
     return <div>Loading...</div>;
   }
 
@@ -67,6 +81,20 @@ export default function ProfilePage() {
           <div className="flex-1 text-center md:text-left">
             <h1 className="text-4xl font-bold font-headline">{user.name}</h1>
             <p className="mt-2 text-muted-foreground">{user.email}</p>
+            <div className="flex justify-center md:justify-start gap-4 mt-4">
+               <UserListDialog title="Followers" users={followers}>
+                <button className="text-center">
+                  <p className="font-bold text-lg">{followers.length}</p>
+                  <p className="text-sm text-muted-foreground">Followers</p>
+                </button>
+              </UserListDialog>
+              <UserListDialog title="Following" users={following}>
+                <button className="text-center">
+                  <p className="font-bold text-lg">{following.length}</p>
+                  <p className="text-sm text-muted-foreground">Following</p>
+                </button>
+              </UserListDialog>
+            </div>
             <p className="mt-4 max-w-xl text-lg">{user.bio}</p>
             <Link href="/profile/edit">
                 <Button variant="outline" className="mt-4">

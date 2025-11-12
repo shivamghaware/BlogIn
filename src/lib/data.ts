@@ -1,9 +1,9 @@
 import type { User, Post, Comment } from './types';
 
 const users: User[] = [
-  { id: 'user-1', name: 'Elena Petrova', email: 'elena@example.com', avatarUrl: 'https://picsum.photos/seed/201/40/40', bio: 'Writer, dreamer, and coffee enthusiast.' },
-  { id: 'user-2', name: 'John Miles', email: 'john@example.com', avatarUrl: 'https://picsum.photos/seed/202/40/40', bio: 'Exploring the intersection of technology and creativity.' },
-  { id: 'user-3', name: 'Mei Lin', email: 'mei@example.com', avatarUrl: 'https://picsum.photos/seed/203/40/40', bio: 'Lover of minimalist design and clean code.' },
+  { id: 'user-1', name: 'Elena Petrova', email: 'elena@example.com', avatarUrl: 'https://picsum.photos/seed/201/40/40', bio: 'Writer, dreamer, and coffee enthusiast.', followersCount: 125, followingCount: 78 },
+  { id: 'user-2', name: 'John Miles', email: 'john@example.com', avatarUrl: 'https://picsum.photos/seed/202/40/40', bio: 'Exploring the intersection of technology and creativity.', followersCount: 256, followingCount: 120 },
+  { id: 'user-3', name: 'Mei Lin', email: 'mei@example.com', avatarUrl: 'https://picsum.photos/seed/203/40/40', bio: 'Lover of minimalist design and clean code.', followersCount: 512, followingCount: 32 },
 ];
 
 const posts: Post[] = [

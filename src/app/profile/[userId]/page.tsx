@@ -5,10 +5,11 @@ import { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/posts/PostCard';
-import { getUser, getPosts, getMe } from '@/lib/data';
+import { getUser, getPosts, getMe, getUsers } from '@/lib/data';
 import type { Post, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { notFound } from 'next/navigation';
+import { UserListDialog } from '@/components/users/UserListDialog';
 
 type UserProfilePageProps = {
     params: {
@@ -23,13 +24,15 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const { toast } = useToast();
+  const [followers, setFollowers] = useState<User[]>([]);
+  const [following, setFollowing] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+
 
   useEffect(() => {
     async function fetchData() {
       const fetchedUser = await getUser(userId);
       if (!fetchedUser) {
-        // This will trigger the not-found page. We can't use notFound() directly in useEffect.
-        // A better approach in a real app would be to handle this state in the UI.
         setUser(null); 
         return;
       }
@@ -38,35 +41,68 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
       const me = await getMe();
       setCurrentUser(me);
 
-      const allPosts = await getPosts();
-      setUserPosts(allPosts.filter((post) => post.author.id === fetchedUser.id));
+      const allPostsData = await getPosts();
+      setUserPosts(allPostsData.filter((post) => post.author.id === fetchedUser.id));
 
       if (me && fetchedUser.id !== me.id) {
           const followedUsers = JSON.parse(localStorage.getItem('followedUsers') || '[]');
           setIsFollowing(followedUsers.includes(fetchedUser.id));
       }
+      
+      const allUsersData = await getUsers();
+      setAllUsers(allUsersData);
     }
     fetchData();
   }, [userId]);
 
+  useEffect(() => {
+    if (user && allUsers.length > 0) {
+      // In a real app, this would be fetched from the backend.
+      // Here, we simulate it based on who the current user follows.
+      const userFollowers: User[] = [];
+      if(currentUser && localStorage.getItem('followedUsers')?.includes(user.id)) {
+        userFollowers.push(currentUser);
+      }
+      setFollowers(userFollowers);
+
+      // Simulate following list for the displayed user
+      const userFollowingIds = JSON.parse(localStorage.getItem(`followedBy-${user.id}`) || '[]');
+      const userFollowing = allUsers.filter(u => userFollowingIds.includes(u.id));
+      setFollowing(userFollowing);
+    }
+  }, [user, allUsers, currentUser]);
 
   const handleFollowToggle = () => {
-    if (!user) return;
+    if (!user || !currentUser) return;
 
-    const followedUsers = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+    const followedUsersKey = 'followedUsers'; // Current user's following list
+    const userFollowersKey = `followedBy-${user.id}`; // The displayed user's followers list
+
+    let followedUsers: string[] = JSON.parse(localStorage.getItem(followedUsersKey) || '[]');
+    let userFollowers: string[] = JSON.parse(localStorage.getItem(userFollowersKey) || '[]');
+    
     const newIsFollowing = !isFollowing;
 
     if (newIsFollowing) {
-        followedUsers.push(user.id);
+        if (!followedUsers.includes(user.id)) followedUsers.push(user.id);
+        if (!userFollowers.includes(currentUser.id)) userFollowers.push(currentUser.id);
     } else {
-        const index = followedUsers.indexOf(user.id);
-        if (index > -1) {
-            followedUsers.splice(index, 1);
-        }
+        followedUsers = followedUsers.filter(id => id !== user.id);
+        userFollowers = userFollowers.filter(id => id !== currentUser.id);
     }
 
-    localStorage.setItem('followedUsers', JSON.stringify(followedUsers));
+    localStorage.setItem(followedUsersKey, JSON.stringify(followedUsers));
+    localStorage.setItem(userFollowersKey, JSON.stringify(userFollowers));
+    
     setIsFollowing(newIsFollowing);
+
+    setUser(prevUser => {
+        if (!prevUser) return null;
+        return {
+            ...prevUser,
+            followersCount: newIsFollowing ? prevUser.followersCount + 1 : prevUser.followersCount - 1,
+        }
+    });
 
     toast({
         title: newIsFollowing ? `Followed ${user.name}` : `Unfollowed ${user.name}`,
@@ -74,7 +110,6 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
   };
 
   if (user === null) {
-      // In a real app, you might show a loading skeleton here
       return <div>Loading profile...</div>;
   }
   
@@ -103,6 +138,20 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
           <div className="flex-1 text-center md:text-left">
             <h1 className="text-4xl font-bold font-headline">{user.name}</h1>
             <p className="mt-2 text-muted-foreground">{user.email}</p>
+            <div className="flex justify-center md:justify-start gap-4 mt-4">
+              <UserListDialog title="Followers" users={followers}>
+                <button className="text-center">
+                  <p className="font-bold text-lg">{user.followersCount}</p>
+                  <p className="text-sm text-muted-foreground">Followers</p>
+                </button>
+              </UserListDialog>
+              <UserListDialog title="Following" users={following}>
+                <button className="text-center">
+                  <p className="font-bold text-lg">{user.followingCount}</p>
+                  <p className="text-sm text-muted-foreground">Following</p>
+                </button>
+              </UserListDialog>
+            </div>
             <p className="mt-4 max-w-xl text-lg">{user.bio}</p>
             {!isOwnProfile && (
                 <Button variant={isFollowing ? 'default' : 'outline'} className="mt-4" onClick={handleFollowToggle}>
