@@ -84,7 +84,8 @@ export function PostCard({ post }: PostCardProps) {
 
   return (
      <article className="group">
-        <Link href={`/posts/${post.slug}`} className="flex flex-col md:flex-row gap-8 w-full">
+        <Link href={`/posts/${post.slug}`} className="block">
+          <div className="flex flex-col md:flex-row gap-8 w-full">
             <div className="flex-1">
                 <div className="flex items-center gap-2 text-sm">
                 <Link href={`/profile/${post.author.id}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-2 relative z-10">
@@ -139,6 +140,7 @@ export function PostCard({ post }: PostCardProps) {
                     data-ai-hint={post.imageHint}
                 />
             </div>
+          </div>
         </Link>
     </article>
   );
