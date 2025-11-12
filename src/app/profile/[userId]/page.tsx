@@ -18,7 +18,6 @@ type UserProfilePageProps = {
 };
 
 export default function UserProfilePage({ params }: UserProfilePageProps) {
-  const { userId } = params;
   const [user, setUser] = useState<User | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
@@ -31,6 +30,7 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
 
   useEffect(() => {
     async function fetchData() {
+      const { userId } = params;
       const fetchedUser = await getUser(userId);
       if (!fetchedUser) {
         setUser(null); 
@@ -53,7 +53,7 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
       setAllUsers(allUsersData);
     }
     fetchData();
-  }, [userId]);
+  }, [params]);
 
   useEffect(() => {
     if (user && allUsers.length > 0) {
@@ -153,7 +153,7 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
               </UserListDialog>
             </div>
             <p className="mt-4 max-w-xl text-lg">{user.bio}</p>
-            {!isOwnProfile && (
+            {!isOwnProfile && currentUser && (
                 <Button variant={isFollowing ? 'default' : 'outline'} className="mt-4" onClick={handleFollowToggle}>
                     {isFollowing ? 'Following' : 'Follow'}
                 </Button>
