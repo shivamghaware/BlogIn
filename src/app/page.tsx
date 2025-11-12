@@ -1,10 +1,47 @@
+
+'use client';
+
+import { useState, useEffect } from 'react';
 import { PostCard } from "@/components/posts/PostCard";
 import { getPosts } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
+import type { Post } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
-export default async function Home() {
-  const posts = await getPosts();
-  const allTags = [...new Set(posts.flatMap((post) => post.tags))];
+export default function Home() {
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      const posts = await getPosts();
+      setAllPosts(posts);
+      setFilteredPosts(posts);
+      const tags = [...new Set(posts.flatMap((post) => post.tags))];
+      setAllTags(tags);
+    }
+    fetchData();
+  }, []);
+
+  const handleTagClick = (tag: string) => {
+    if (activeTag === tag) {
+      // If the same tag is clicked again, reset the filter
+      setActiveTag(null);
+      setFilteredPosts(allPosts);
+    } else {
+      setActiveTag(tag);
+      setFilteredPosts(allPosts.filter(post => post.tags.includes(tag)));
+    }
+  };
+  
+  const clearFilter = () => {
+    setActiveTag(null);
+    setFilteredPosts(allPosts);
+  }
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -17,10 +54,23 @@ export default async function Home() {
         </header>
 
         <div className="border-b pb-8">
-          <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground mb-4">Trending topics</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground">Trending topics</h2>
+            {activeTag && (
+                <Button variant="ghost" size="sm" onClick={clearFilter} className="text-muted-foreground hover:text-foreground">
+                    <X className="mr-2 h-4 w-4" />
+                    Clear filter
+                </Button>
+            )}
+          </div>
           <div className="flex flex-wrap gap-2">
             {allTags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors">
+              <Badge 
+                key={tag} 
+                variant={activeTag === tag ? 'default' : 'secondary'} 
+                className="text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
+                onClick={() => handleTagClick(tag)}
+              >
                 {tag}
               </Badge>
             ))}
@@ -28,7 +78,7 @@ export default async function Home() {
         </div>
 
         <div className="mt-8 grid gap-16">
-          {posts.map((post) => (
+          {filteredPosts.map((post) => (
             <PostCard key={post.slug} post={post} />
           ))}
         </div>
