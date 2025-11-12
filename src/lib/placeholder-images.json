@@ -1,3 +1,46 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "post-1",
+      "description": "Abstract architecture",
+      "imageUrl": "https://images.unsplash.com/photo-1563441082154-be8c9b37f115?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YWJzdHJhY3QlMjBhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzYyOTMxOTg5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract architecture"
+    },
+    {
+      "id": "post-2",
+      "description": "Minimalist desk setup",
+      "imageUrl": "https://images.unsplash.com/photo-1561754825-6f9d7b82322d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxkZXNrJTIwc2V0dXB8ZW58MHx8fHwxNzYyOTE5NjA2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "desk setup"
+    },
+    {
+      "id": "post-3",
+      "description": "Nature landscape",
+      "imageUrl": "https://images.unsplash.com/photo-1611657291636-c141ee8cf7ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxuYXR1cmUlMjBsYW5kc2NhcGV8ZW58MHx8fHwxNzYyOTA0ODgzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "nature landscape"
+    },
+    {
+      "id": "post-4",
+      "description": "City at night",
+      "imageUrl": "https://images.unsplash.com/photo-1601042879364-f3947d3f9c16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjaXR5JTIwbmlnaHR8ZW58MHx8fHwxNzYyODQyMzcwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "city night"
+    },
+    {
+      "id": "avatar-1",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjI5MzU5MTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "avatar-2",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjI5NTI2MDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man portrait"
+    },
+    {
+      "id": "avatar-3",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2Mjg4ODYyM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman portrait"
+    }
+  ]
 }
