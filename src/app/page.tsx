@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { PostCard } from "@/components/posts/PostCard";
 import { getPosts } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,10 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 
-export default function Home() {
+function HomePageContent() {
+  const searchParams = useSearchParams();
+  const tagFromUrl = searchParams.get('tag');
+
   const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
@@ -20,12 +24,18 @@ export default function Home() {
     async function fetchData() {
       const posts = await getPosts();
       setAllPosts(posts);
-      setFilteredPosts(posts);
       const tags = [...new Set(posts.flatMap((post) => post.tags))];
       setAllTags(tags);
+
+      if (tagFromUrl) {
+        setActiveTag(tagFromUrl);
+        setFilteredPosts(posts.filter(post => post.tags.includes(tagFromUrl)));
+      } else {
+        setFilteredPosts(posts);
+      }
     }
     fetchData();
-  }, []);
+  }, [tagFromUrl]);
 
   const handleTagClick = (tag: string) => {
     if (activeTag === tag) {
@@ -85,4 +95,12 @@ export default function Home() {
       </div>
     </div>
   );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomePageContent />
+    </Suspense>
+  )
 }

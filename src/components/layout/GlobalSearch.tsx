@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { FileText, Search, User } from 'lucide-react';
+import { FileText, Search, User, Tag } from 'lucide-react';
 
 import {
   CommandDialog,
@@ -47,6 +47,7 @@ CommandItemLink.displayName = 'CommandItemLink';
 export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
   const [posts, setPosts] = React.useState<Post[]>([]);
   const [users, setUsers] = React.useState<UserType[]>([]);
+  const [tags, setTags] = React.useState<string[]>([]);
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -65,8 +66,10 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
       if (open) {
         const allPosts = await getPosts();
         const allUsers = await getUsers();
+        const allTags = [...new Set(allPosts.flatMap((post) => post.tags))];
         setPosts(allPosts);
         setUsers(allUsers);
+        setTags(allTags);
       }
     }
     fetchAllData();
@@ -78,9 +81,22 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Search for posts or users..." />
+      <CommandInput placeholder="Search for posts, users or topics..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
+        <CommandGroup heading="Topics">
+          {tags.map((tag) => (
+            <CommandItemLink
+              key={tag}
+              href={`/?tag=${encodeURIComponent(tag)}`}
+              value={`tag-${tag}`}
+              onSelect={handleSelect}
+            >
+              <Tag className="mr-2 h-4 w-4" />
+              <span>{tag}</span>
+            </CommandItemLink>
+          ))}
+        </CommandGroup>
         <CommandGroup heading="Posts">
           {posts.map((post) => (
             <CommandItemLink
