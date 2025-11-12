@@ -5,20 +5,18 @@
 import { PostCreator } from '@/components/posts/PostCreator';
 import { getPost } from '@/lib/data';
 import type { Post } from '@/lib/types';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-type EditPostPageProps = {
-    params: {
-        slug: string;
-    };
-};
+export default function EditPostPage() {
+  const params = useParams();
+  const slug = params.slug as string;
 
-export default function EditPostPage({ params: { slug } }: EditPostPageProps) {
   const [post, setPost] = useState<Post | null | undefined>(undefined);
 
   useEffect(() => {
     async function fetchPost() {
+      if (!slug) return;
       const fetchedPost = await getPost(slug);
       if (!fetchedPost) {
         setPost(null);

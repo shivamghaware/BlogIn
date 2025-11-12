@@ -9,18 +9,15 @@ import { PostCard } from '@/components/posts/PostCard';
 import { getUser, getPosts, getMe, getUsers } from '@/lib/data';
 import type { Post, User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { UserListDialog } from '@/components/users/UserListDialog';
 import Link from 'next/link';
 import { Pen } from 'lucide-react';
 
-type UserProfilePageProps = {
-    params: {
-        userId: string;
-    };
-};
+export default function UserProfilePage() {
+  const params = useParams();
+  const userId = params.userId as string;
 
-export default function UserProfilePage({ params: { userId } }: UserProfilePageProps) {
   const [user, setUser] = useState<User | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
@@ -38,6 +35,7 @@ export default function UserProfilePage({ params: { userId } }: UserProfilePageP
   const isOwnProfile = currentUser?.id === user?.id;
 
   const fetchData = useCallback(async () => {
+    if (!userId) return;
     const [fetchedUser, me, allPostsData, allUsersData] = await Promise.all([
         getUser(userId),
         getMe(),
@@ -73,7 +71,7 @@ export default function UserProfilePage({ params: { userId } }: UserProfilePageP
         const userFollowingIds = JSON.parse(localStorage.getItem('followedUsers') || '[]');
         setFollowing(allUsersData.filter(u => userFollowingIds.includes(u.id)));
     } else {
-        // This is tricky to simulate without a real backend. We'll assume we can't see other users' following lists.
+        // This is tricky to simulate without a real backend. We can't see other users' following lists.
         setFollowing([]);
     }
   }, [userId]);
