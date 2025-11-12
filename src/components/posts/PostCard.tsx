@@ -1,3 +1,6 @@
+
+'use client';
+
 import type { Post } from '@/lib/types';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -6,17 +9,31 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Bookmark, MessageCircle, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 type PostCardProps = {
   post: Post;
 };
 
 export function PostCard({ post }: PostCardProps) {
+    const { toast } = useToast();
+    const [isBookmarked, setIsBookmarked] = useState(false);
+
     const getInitials = (name: string) => {
         const [firstName, lastName] = name.split(' ');
         return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
     }
     const snippet = post.content.split('\n\n')[0].substring(0, 150) + '...';
+
+    const handleBookmark = () => {
+        setIsBookmarked(!isBookmarked);
+        toast({
+            title: isBookmarked ? 'Post unsaved' : 'Post saved!',
+            description: isBookmarked ? 'The post has been removed from your saved list.' : 'You can find this post in your saved list.',
+        });
+    }
 
   return (
     <article className="flex flex-col md:flex-row gap-8">
@@ -54,8 +71,8 @@ export function PostCard({ post }: PostCardProps) {
                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
                     <MessageCircle className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                    <Bookmark className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleBookmark}>
+                    <Bookmark className={cn('h-4 w-4', isBookmarked && 'fill-primary text-primary')} />
                 </Button>
             </div>
         </div>

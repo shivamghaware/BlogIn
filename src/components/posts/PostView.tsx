@@ -1,3 +1,6 @@
+
+'use client';
+
 import type { Post, Comment } from '@/lib/types';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,6 +11,9 @@ import { Heart, MessageCircle, Bookmark } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { CommentSection } from '@/components/comments/CommentSection';
 import Link from 'next/link';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 type PostViewProps = {
   post: Post;
@@ -15,10 +21,21 @@ type PostViewProps = {
 };
 
 export default function PostView({ post, comments }: PostViewProps) {
+  const { toast } = useToast();
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
   const getInitials = (name: string) => {
     const [firstName, lastName] = name.split(' ');
     return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
   };
+  
+  const handleBookmark = () => {
+    setIsBookmarked(!isBookmarked);
+    toast({
+        title: isBookmarked ? 'Post unsaved' : 'Post saved!',
+        description: isBookmarked ? 'The post has been removed from your saved list.' : 'You can find this post in your saved list.',
+    });
+  }
 
   return (
     <article>
@@ -60,8 +77,8 @@ export default function PostView({ post, comments }: PostViewProps) {
                 </Button>
             </div>
             <div>
-                 <Button variant="ghost" size="icon" className='text-muted-foreground'>
-                    <Bookmark className="h-5 w-5" />
+                 <Button variant="ghost" size="icon" className='text-muted-foreground' onClick={handleBookmark}>
+                    <Bookmark className={cn('h-5 w-5', isBookmarked && 'fill-primary text-primary')} />
                 </Button>
             </div>
         </div>
