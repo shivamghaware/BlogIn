@@ -111,7 +111,21 @@ export async function getPost(slug: string): Promise<Post | undefined> {
 export async function getComments(slug: string): Promise<Comment[]> {
     return new Promise((resolve) => {
     const comments = getLocalStorage('comments', initialComments);
-    setTimeout(() => resolve((comments[slug] || []).map(c => ({...c, postSlug: slug }))), 50);
+    setTimeout(() => resolve((comments[slug] || []).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(c => ({...c, postSlug: slug }))), 50);
+  });
+}
+
+export async function addComment(comment: Comment) {
+  return new Promise<Comment>((resolve) => {
+    setTimeout(() => {
+      const allComments = getLocalStorage('comments', initialComments);
+      const postComments = allComments[comment.postSlug] || [];
+      const newPostComments = [comment, ...postComments];
+      allComments[comment.postSlug] = newPostComments;
+      setLocalStorage('comments', allComments);
+      window.dispatchEvent(new Event('storage'));
+      resolve(comment);
+    }, 50);
   });
 }
 
@@ -124,7 +138,7 @@ export async function getAllComments(): Promise<Comment[]> {
                 postSlug: slug,
             }))
         );
-        setTimeout(() => resolve(allComments), 50);
+        setTimeout(() => resolve(allComments.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())), 50);
     });
 }
 

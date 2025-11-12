@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { getMe } from '@/lib/data';
+import { getMe, addComment } from '@/lib/data';
 
 type PostViewProps = {
   post: Post;
@@ -154,8 +154,14 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
     });
   };
 
-  const handleCommentSubmit = (newComment: Comment) => {
-    setComments(prev => [newComment, ...prev]);
+  const handleCommentSubmit = async (newComment: Omit<Comment, 'id' | 'createdAt'>) => {
+    const comment: Comment = {
+      ...newComment,
+      id: `comment-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    await addComment(comment);
+    setComments(prev => [comment, ...prev]);
   };
   
   const isOwnPost = currentUser?.id === post.author.id;

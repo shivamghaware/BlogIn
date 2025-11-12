@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Comment, User } from '@/lib/types';
@@ -11,7 +12,7 @@ import { getMe } from '@/lib/data';
 type CommentSectionProps = {
   comments: Comment[];
   postSlug: string;
-  onCommentSubmit: (newComment: Comment) => void;
+  onCommentSubmit: (newComment: Omit<Comment, 'id' | 'createdAt'>) => void;
 };
 
 export function CommentSection({ comments, postSlug, onCommentSubmit }: CommentSectionProps) {
@@ -23,9 +24,18 @@ export function CommentSection({ comments, postSlug, onCommentSubmit }: CommentS
       setCurrentUser(user);
     }
     fetchUser();
+    
+    window.addEventListener('storage', fetchUser);
+    window.addEventListener('logout', fetchUser);
+
+    return () => {
+        window.removeEventListener('storage', fetchUser);
+        window.removeEventListener('logout', fetchUser);
+    }
   }, []);
 
   const getInitials = (name: string) => {
+    if (!name) return '';
     const [firstName, lastName] = name.split(' ');
     return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
   }

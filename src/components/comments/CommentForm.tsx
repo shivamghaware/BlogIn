@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 type CommentFormProps = {
   currentUser: User;
   postSlug: string;
-  onCommentSubmit: (newComment: Comment) => void;
+  onCommentSubmit: (newComment: Omit<Comment, 'id' | 'createdAt'>) => void;
 };
 
 export function CommentForm({ currentUser, postSlug, onCommentSubmit }: CommentFormProps) {
@@ -24,16 +24,13 @@ export function CommentForm({ currentUser, postSlug, onCommentSubmit }: CommentF
       return;
     }
 
-    const newComment: Comment = {
-      id: `comment-${Date.now()}`,
+    const newCommentData = {
       text: commentText,
       author: currentUser,
-      createdAt: new Date().toISOString(),
       postSlug: postSlug,
     };
 
-    // In a real app, you would send this to a server
-    onCommentSubmit(newComment);
+    onCommentSubmit(newCommentData);
     setCommentText('');
 
     toast({
