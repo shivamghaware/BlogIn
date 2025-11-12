@@ -61,13 +61,22 @@ const initialComments: Record<string, Comment[]> = {
 // Helper to safely access localStorage
 const getLocalStorage = (key: string, defaultValue: any) => {
     if (typeof window === 'undefined') return defaultValue;
-    const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : defaultValue;
+    try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : defaultValue;
+    } catch (error) {
+        console.error(`Error parsing localStorage key "${key}":`, error);
+        return defaultValue;
+    }
 }
 
 const setLocalStorage = (key: string, value: any) => {
     if (typeof window !== 'undefined') {
-        localStorage.setItem(key, JSON.stringify(value));
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+            console.error(`Error setting localStorage key "${key}":`, error);
+        }
     }
 }
 
@@ -109,12 +118,7 @@ export async function getComments(slug: string): Promise<Comment[]> {
 export async function getMe(): Promise<User | null> {
     return new Promise((resolve) => {
         setTimeout(() => {
-            if (typeof window !== 'undefined') {
-                const user = localStorage.getItem('currentUser');
-                resolve(user ? JSON.parse(user) : null);
-            } else {
-                resolve(null);
-            }
+            resolve(getLocalStorage('currentUser', null));
         }, 50);
     });
 }
