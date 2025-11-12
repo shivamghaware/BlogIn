@@ -46,12 +46,6 @@ export function PostCard({ post }: PostCardProps) {
     }
     const snippet = post.content.split('\n\n')[0].substring(0, 200) + '...';
 
-    const handleActionClick = (e: React.MouseEvent, action: () => void) => {
-        e.stopPropagation();
-        e.preventDefault();
-        action();
-    }
-
     const handleBookmark = () => {
         const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
         const newIsBookmarked = !isBookmarked;
@@ -101,65 +95,65 @@ export function PostCard({ post }: PostCardProps) {
     }
 
   return (
-     <Link href={`/posts/${post.slug}`} className="block group cursor-pointer">
-        <article className="space-y-4">
-            <div className="flex items-center gap-2 text-sm">
-                <Link href={`/profile/${post.author.id}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-2 relative z-10">
-                    <Avatar className="h-6 w-6">
-                        <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
-                        <AvatarFallback>{getInitials(post.author.name)}</AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium hover:underline">{post.author.name}</span>
-                </Link>
-                <span className="text-muted-foreground">·</span>
-                <time dateTime={post.createdAt} className="text-muted-foreground">
-                    {format(new Date(post.createdAt), 'MMM d, yyyy')}
-                </time>
-            </div>
-            
-            <div className="flex flex-col md:flex-row gap-8 w-full">
-                <div className="flex-1">
+    <article className="group space-y-4">
+        <div className="flex items-center gap-2 text-sm">
+            <Link href={`/profile/${post.author.id}`} className="flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                    <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
+                    <AvatarFallback>{getInitials(post.author.name)}</AvatarFallback>
+                </Avatar>
+                <span className="font-medium hover:underline">{post.author.name}</span>
+            </Link>
+            <span className="text-muted-foreground">·</span>
+            <time dateTime={post.createdAt} className="text-muted-foreground">
+                {format(new Date(post.createdAt), 'MMM d, yyyy')}
+            </time>
+        </div>
+        
+        <div className="flex flex-col md:flex-row gap-8 w-full">
+            <div className="flex-1">
+                <Link href={`/posts/${post.slug}`}>
                     <h2 className="text-2xl font-bold font-headline group-hover:text-primary transition-colors">
                         {post.title}
                     </h2>
-                    <p className="mt-2 text-muted-foreground leading-relaxed">{snippet}</p>
-                </div>
-                <div className="w-full md:w-48 lg:w-56 aspect-[4/3] relative shrink-0">
-                    <Image
-                        src={post.imageUrl}
-                        alt={post.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover rounded-md"
-                        data-ai-hint={post.imageHint}
-                    />
-                </div>
+                </Link>
+                <p className="mt-2 text-muted-foreground leading-relaxed">{snippet}</p>
             </div>
+            <Link href={`/posts/${post.slug}`} className="w-full md:w-48 lg:w-56 aspect-[4/3] relative shrink-0">
+                <Image
+                    src={post.imageUrl}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover rounded-md"
+                    data-ai-hint={post.imageHint}
+                />
+            </Link>
+        </div>
 
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-wrap">
-                    {post.tags.map((tag) => (
-                        <Link key={tag} href={`/?tag=${tag}`} onClick={(e) => e.stopPropagation()}>
-                            <Badge variant="secondary" className="font-normal">{tag}</Badge>
-                        </Link>
-                    ))}
-                    <span className="text-sm text-muted-foreground hidden sm:inline">· 5 min read</span>
-                </div>
-                <div className="flex items-center gap-1 relative z-10">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={(e) => handleActionClick(e, handleLike)}>
-                        <Heart className={cn('h-4 w-4', isLiked && 'fill-destructive text-destructive')} />
-                    </Button>
-                    <Link href={`/posts/${post.slug}#comments`} onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                                <MessageCircle className="h-4 w-4" />
-                        </Button>
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
+                {post.tags.map((tag) => (
+                    <Link key={tag} href={`/?tag=${tag}`}>
+                        <Badge variant="secondary" className="font-normal cursor-pointer hover:bg-accent/80">{tag}</Badge>
                     </Link>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={(e) => handleActionClick(e, handleBookmark)}>
-                        <Bookmark className={cn('h-4 w-4', isBookmarked && 'fill-primary text-primary')} />
-                    </Button>
-                </div>
+                ))}
+                <span className="text-sm text-muted-foreground hidden sm:inline">· 5 min read</span>
             </div>
-        </article>
-     </Link>
+            <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleLike}>
+                    <Heart className={cn('h-4 w-4', isLiked && 'fill-destructive text-destructive')} />
+                </Button>
+                <Link href={`/posts/${post.slug}#comments`}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                            <MessageCircle className="h-4 w-4" />
+                    </Button>
+                </Link>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleBookmark}>
+                    <Bookmark className={cn('h-4 w-4', isBookmarked && 'fill-primary text-primary')} />
+                </Button>
+            </div>
+        </div>
+    </article>
   );
 }
