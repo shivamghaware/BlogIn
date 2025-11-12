@@ -100,7 +100,7 @@ export function LoginForm() {
                     </Button>
                     <p className="mt-4 text-center text-sm text-muted-foreground">
                         Don't have an account?{' '}
-                        <Link href="#" className="underline">
+                        <Link href="/signup" className="underline">
                             Sign up
                         </Link>
                     </p>
