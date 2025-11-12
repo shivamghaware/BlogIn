@@ -109,7 +109,12 @@ export async function getComments(slug: string): Promise<Comment[]> {
 export async function getMe(): Promise<User | null> {
     return new Promise((resolve) => {
         setTimeout(() => {
-            resolve(getLocalStorage('currentUser', null));
+            if (typeof window !== 'undefined') {
+                const user = localStorage.getItem('currentUser');
+                resolve(user ? JSON.parse(user) : null);
+            } else {
+                resolve(null);
+            }
         }, 50);
     });
 }

@@ -61,7 +61,6 @@ export function LoginForm() {
         });
         window.dispatchEvent(new Event('storage'));
         router.push('/');
-        router.refresh();
       } else {
         toast({
           title: 'Login Failed',

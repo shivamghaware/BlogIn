@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { getMe, logoutUser } from '@/lib/data';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { User } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 
@@ -22,12 +22,12 @@ export function UserNav() {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
+  const fetchUser = useCallback(async () => {
+    const userData = await getMe();
+    setUser(userData);
+  }, []);
+
   useEffect(() => {
-    async function fetchUser() {
-      const userData = await getMe();
-      setUser(userData);
-    }
-    
     // Initial fetch
     fetchUser();
 
@@ -44,16 +44,18 @@ export function UserNav() {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('logout', handleStorageChange);
     };
-  }, []);
+  }, [fetchUser]);
 
   const handleLogout = async () => {
     await logoutUser();
     setUser(null);
     window.dispatchEvent(new Event('logout'));
     router.push('/');
+    router.refresh(); // Ensure the page reflects the logged out state
   };
 
   const getInitials = (name: string) => {
+    if (!name) return '';
     const [firstName, lastName] = name.split(' ');
     return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
   }
