@@ -1,0 +1,6 @@
+# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+#
+# This file is used to specify how search engine crawlers should index your site.
+
+User-agent: *
+Allow: /
