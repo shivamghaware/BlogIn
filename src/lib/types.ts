@@ -26,4 +26,5 @@ export type Comment = {
   text: string;
   author: User;
   createdAt: string;
+  postSlug: string;
 };

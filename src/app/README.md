@@ -2,6 +2,8 @@
 
 BlogIn is a feature-rich, modern blogging platform built with Next.js, React, and Google's Genkit. It provides a clean, intuitive interface for writers to create and share their stories, and for readers to discover, engage with, and follow their favorite authors. The application is designed to be performant, aesthetically pleasing, and highly interactive.
 
+For a visual representation of the project architecture, please see the [UML Diagrams](uml.md).
+
 ## Key Features
 
 - **User Authentication**: Secure sign-up and login functionality.

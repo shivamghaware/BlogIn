@@ -1,18 +1,19 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/posts/PostCard';
-import { getUser, getPosts, getMe, getUsers } from '@/lib/data';
-import type { Post, User } from '@/lib/types';
+import { getUser, getPosts, getMe, getUsers, getAllComments } from '@/lib/data';
+import type { Post, User, Comment } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { notFound, useParams } from 'next/navigation';
 import { UserListDialog } from '@/components/users/UserListDialog';
 import Link from 'next/link';
-import { Pen } from 'lucide-react';
+import { Pen, MessageCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { format } from 'date-fns';
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -21,6 +22,7 @@ export default function UserProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [userComments, setUserComments] = useState<Comment[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const { toast } = useToast();
   const [followers, setFollowers] = useState<User[]>([]);
@@ -36,11 +38,12 @@ export default function UserProfilePage() {
 
   const fetchData = useCallback(async () => {
     if (!userId) return;
-    const [fetchedUser, me, allPostsData, allUsersData] = await Promise.all([
+    const [fetchedUser, me, allPostsData, allUsersData, allCommentsData] = await Promise.all([
         getUser(userId),
         getMe(),
         getPosts(),
-        getUsers()
+        getUsers(),
+        getAllComments()
     ]);
 
     if (!fetchedUser) {
@@ -50,6 +53,7 @@ export default function UserProfilePage() {
     setUser(fetchedUser);
     setCurrentUser(me);
     setUserPosts(allPostsData.filter((post) => post.author.id === fetchedUser.id));
+    setUserComments(allCommentsData.filter(comment => comment.author.id === fetchedUser.id));
 
     // Following state
     if (me && fetchedUser.id !== me.id) {
@@ -67,12 +71,14 @@ export default function UserProfilePage() {
     setFollowers(allUsersData.filter(u => userFollowersIds.includes(u.id)));
 
     // Following list for the displayed user
-    if (me && fetchedUser.id === me.id) {
-        const userFollowingIds = JSON.parse(localStorage.getItem('followedUsers') || '[]');
-        setFollowing(allUsersData.filter(u => userFollowingIds.includes(u.id)));
+    // This logic can only get the *current user's* following list.
+    // We can't see other users' following lists in this simulated app.
+    // So we only show the "Following" list on our own profile.
+    if (fetchedUser.id === me?.id) {
+      const userFollowingIds = JSON.parse(localStorage.getItem('followedUsers') || '[]');
+      setFollowing(allUsersData.filter(u => userFollowingIds.includes(u.id)));
     } else {
-        // This is tricky to simulate without a real backend. We can't see other users' following lists.
-        setFollowing([]);
+      setFollowing([]); // Can't view other people's following list
     }
   }, [userId]);
 
@@ -155,12 +161,14 @@ export default function UserProfilePage() {
                   <p className="text-sm text-muted-foreground">Followers</p>
                 </button>
               </UserListDialog>
-              <UserListDialog title="Following" users={following}>
-                <button className="text-center">
-                  <p className="font-bold text-lg">{following.length}</p>
-                  <p className="text-sm text-muted-foreground">Following</p>
-                </button>
-              </UserListDialog>
+              {isOwnProfile && (
+                <UserListDialog title="Following" users={following}>
+                  <button className="text-center">
+                    <p className="font-bold text-lg">{following.length}</p>
+                    <p className="text-sm text-muted-foreground">Following</p>
+                  </button>
+                </UserListDialog>
+              )}
             </div>
             <p className="mt-4 max-w-xl text-lg">{user.bio}</p>
             {isOwnProfile ? (
@@ -179,18 +187,50 @@ export default function UserProfilePage() {
         </header>
 
         <div className="border-t pt-8">
-          <h2 className="text-2xl font-bold font-headline mb-6">Posts by {user.name.split(' ')[0]}</h2>
-          {userPosts.length > 0 ? (
-            <div className="grid gap-16">
-              {userPosts.map((post) => (
-                <PostCard key={post.slug} post={post} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16 border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">{user.name} hasn't written any posts yet.</p>
-            </div>
-          )}
+          <Tabs defaultValue="posts" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="posts">Posts</TabsTrigger>
+              <TabsTrigger value="comments">
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Comments
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="posts">
+              {userPosts.length > 0 ? (
+                <div className="grid gap-16">
+                  {userPosts.map((post) => (
+                    <PostCard key={post.slug} post={post} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">{user.name} hasn't written any posts yet.</p>
+                </div>
+              )}
+            </TabsContent>
+            <TabsContent value="comments">
+              {userComments.length > 0 ? (
+                <div className="space-y-6">
+                {userComments.map((comment) => (
+                   <div key={comment.id} className="p-4 border rounded-lg">
+                     <p className="text-muted-foreground">{comment.text}</p>
+                     <div className="text-sm text-muted-foreground mt-2">
+                       <span>Commented on </span>
+                       <Link href={`/p/${comment.postSlug}#comments`} className="underline hover:text-foreground">
+                         a post
+                       </Link>
+                       <span> · {format(new Date(comment.createdAt), 'MMM d, yyyy')}</span>
+                     </div>
+                   </div>
+                ))}
+                </div>
+              ) : (
+                <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">{user.name} hasn't commented on any posts yet.</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

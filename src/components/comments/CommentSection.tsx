@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Comment, User } from '@/lib/types';
@@ -10,10 +11,11 @@ import { getMe } from '@/lib/data';
 
 type CommentSectionProps = {
   comments: Comment[];
-  onCommentSubmit: (newComment: Comment) => void;
+  postSlug: string;
+  onCommentSubmit: (newComment: Omit<Comment, 'id' | 'createdAt'>) => void;
 };
 
-export function CommentSection({ comments, onCommentSubmit }: CommentSectionProps) {
+export function CommentSection({ comments, postSlug, onCommentSubmit }: CommentSectionProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -22,9 +24,18 @@ export function CommentSection({ comments, onCommentSubmit }: CommentSectionProp
       setCurrentUser(user);
     }
     fetchUser();
+    
+    window.addEventListener('storage', fetchUser);
+    window.addEventListener('logout', fetchUser);
+
+    return () => {
+        window.removeEventListener('storage', fetchUser);
+        window.removeEventListener('logout', fetchUser);
+    }
   }, []);
 
   const getInitials = (name: string) => {
+    if (!name) return '';
     const [firstName, lastName] = name.split(' ');
     return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
   }
@@ -36,7 +47,7 @@ export function CommentSection({ comments, onCommentSubmit }: CommentSectionProp
 
       <div className="mb-8">
         {currentUser ? (
-          <CommentForm currentUser={currentUser} onCommentSubmit={onCommentSubmit} />
+          <CommentForm currentUser={currentUser} postSlug={postSlug} onCommentSubmit={onCommentSubmit} />
         ) : (
           <div className="p-4 border rounded-lg text-center text-muted-foreground">
             You must be logged in to comment.

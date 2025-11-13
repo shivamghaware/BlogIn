@@ -7,14 +7,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Bookmark, Pen, Heading2, Heading3, Heading4, Bold, Italic } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, Pen } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { CommentSection } from '@/components/comments/CommentSection';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { getMe } from '@/lib/data';
+import { getMe, addComment } from '@/lib/data';
 
 type PostViewProps = {
   post: Post;
@@ -154,8 +154,14 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
     });
   };
 
-  const handleCommentSubmit = (newComment: Comment) => {
-    setComments(prev => [newComment, ...prev]);
+  const handleCommentSubmit = async (newComment: Omit<Comment, 'id' | 'createdAt'>) => {
+    const comment: Comment = {
+      ...newComment,
+      id: `comment-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    await addComment(comment);
+    setComments(prev => [comment, ...prev]);
   };
   
   const isOwnPost = currentUser?.id === post.author.id;
@@ -272,7 +278,7 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
       <Separator className="my-12" />
 
       <div id="comments">
-        <CommentSection comments={comments} onCommentSubmit={handleCommentSubmit} />
+        <CommentSection postSlug={post.slug} comments={comments} onCommentSubmit={handleCommentSubmit} />
       </div>
     </article>
   );
