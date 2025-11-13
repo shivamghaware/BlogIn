@@ -1,15 +1,10 @@
 # See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
-#
-# Allow all crawlers access to the site, but disallow specific private routes.
 
 User-agent: *
+Disallow: /login/
+Disallow: /signup/
+Disallow: /profile/edit/
+Disallow: /new-post/
+Disallow: /settings/
 
-# Allow all content by default. Individual disallows will override this for specific paths.
-Allow: /
-
-# Disallow routes that are not useful for search engine indexing.
-Disallow: /login
-Disallow: /signup
-Disallow: /profile/edit
-Disallow: /new-post
-Disallow: /settings
+Sitemap: https://www.example.com/sitemap.xml
