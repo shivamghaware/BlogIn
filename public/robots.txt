@@ -1,6 +1,15 @@
 # See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
 #
-# This file is used to specify how search engine crawlers should index your site.
+# Allow all crawlers access to the site, but disallow specific private routes.
 
 User-agent: *
+
+# Allow all content by default. Individual disallows will override this for specific paths.
 Allow: /
+
+# Disallow routes that are not useful for search engine indexing.
+Disallow: /login
+Disallow: /signup
+Disallow: /profile/edit
+Disallow: /new-post
+Disallow: /settings
