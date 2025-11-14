@@ -64,11 +64,17 @@ export default function ProfilePage() {
     };
   }, [fetchData]);
 
+  const handlePostDelete = (slug: string) => {
+    setUserPosts(prevPosts => prevPosts.filter(post => post.slug !== slug));
+  };
+
+
   if (!user) {
     return <div>Loading...</div>;
   }
 
   const getInitials = (name: string) => {
+    if(!name) return '';
     const [firstName, lastName] = name.split(' ');
     return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
   };
@@ -131,7 +137,12 @@ export default function ProfilePage() {
                     {userPosts.length > 0 ? (
                         <div className="grid gap-16">
                         {userPosts.map((post) => (
-                            <PostCard key={post.slug} post={post} />
+                            <PostCard 
+                                key={post.slug} 
+                                post={post} 
+                                showAuthor={false} 
+                                onPostDelete={handlePostDelete}
+                            />
                         ))}
                         </div>
                     ) : (
