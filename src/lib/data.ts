@@ -58,72 +58,87 @@ const initialComments: Record<string, Comment[]> = {
   'a-walk-in-nature': [],
 };
 
-// Helper to safely access localStorage
-const getLocalStorage = (key: string, defaultValue: any) => {
-    if (typeof window === 'undefined') return defaultValue;
-    try {
-        const value = localStorage.getItem(key);
-        return value ? JSON.parse(value) : defaultValue;
-    } catch (error) {
-        console.error(`Error parsing localStorage key "${key}":`, error);
-        return defaultValue;
-    }
-}
+// --- LocalStorage Helpers ---
 
-const setLocalStorage = (key: string, value: any) => {
-    if (typeof window !== 'undefined') {
-        try {
-            localStorage.setItem(key, JSON.stringify(value));
-        } catch (error) {
-            console.error(`Error setting localStorage key "${key}":`, error);
-        }
-    }
-}
+// Helper to check if we are in a browser environment
+const isBrowser = typeof window !== 'undefined';
 
-// Initialize data if it doesn't exist
-if (typeof window !== 'undefined' && !localStorage.getItem('users')) {
+// Helper to safely get items from localStorage
+const getLocalStorage = <T>(key: string, defaultValue: T): T => {
+  if (!isBrowser) return defaultValue;
+  try {
+    const storedValue = localStorage.getItem(key);
+    return storedValue ? JSON.parse(storedValue) : defaultValue;
+  } catch (error) {
+    console.error(`Error reading from localStorage for key "${key}":`, error);
+    return defaultValue;
+  }
+};
+
+// Helper to safely set items in localStorage and dispatch a storage event
+const setLocalStorage = <T>(key:string, value: T) => {
+  if (!isBrowser) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    window.dispatchEvent(new Event('storage'));
+  } catch (error) {
+    console.error(`Error writing to localStorage for key "${key}":`, error);
+  }
+};
+
+// --- Data Initialization ---
+
+const initializeData = () => {
+  if (!isBrowser) return;
+
+  const appDataInitialized = localStorage.getItem('appDataInitialized');
+
+  if (!appDataInitialized) {
     setLocalStorage('users', initialUsers);
     setLocalStorage('posts', initialPosts);
     setLocalStorage('comments', initialComments);
-}
+    localStorage.setItem('appDataInitialized', 'true');
+  }
+};
 
-// Simulated API calls
+// Initialize data on load
+initializeData();
+
+
+// --- Simulated API Calls ---
+
 export async function getPosts(): Promise<Post[]> {
   return new Promise((resolve) => {
-    setTimeout(() => resolve(getLocalStorage('posts', initialPosts)), 50);
+    setTimeout(() => resolve(getLocalStorage('posts', [])), 50);
   });
 }
 
-export async function getPost(slug: string): Promise<Post | undefined> {
-    return new Promise((resolve) => {
+export async function getPost(slug: string): Promise<Post | null> {
+  return new Promise((resolve) => {
     setTimeout(() => {
-      const posts = getLocalStorage('posts', initialPosts);
-      const post = posts.find((p: Post) => p.slug === slug);
-      if (post) {
-        const comments = getLocalStorage('comments', initialComments);
-        post.commentsCount = (comments[slug] || []).length;
-      }
-      resolve(post)
+      const posts = getLocalStorage('posts', []);
+      const post = posts.find((p: Post) => p.slug === slug) || null;
+      resolve(post);
     }, 50);
   });
 }
 
 export async function getComments(slug: string): Promise<Comment[]> {
-    return new Promise((resolve) => {
-    const comments = getLocalStorage('comments', initialComments);
-    setTimeout(() => resolve((comments[slug] || []).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(c => ({...c, postSlug: slug }))), 50);
+  return new Promise((resolve) => {
+    const allComments = getLocalStorage('comments', {});
+    const postComments = (allComments[slug] || []).sort((a: Comment, b: Comment) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setTimeout(() => resolve(postComments), 50);
   });
 }
 
-export async function addComment(comment: Comment) {
-  return new Promise<Comment>((resolve) => {
+export async function addComment(comment: Comment): Promise<Comment> {
+  return new Promise((resolve) => {
     setTimeout(() => {
       const allComments = getLocalStorage('comments', initialComments);
       const postComments = allComments[comment.postSlug] || [];
       const newPostComments = [comment, ...postComments];
       allComments[comment.postSlug] = newPostComments;
       setLocalStorage('comments', allComments);
-      window.dispatchEvent(new Event('storage'));
       resolve(comment);
     }, 50);
   });
@@ -131,7 +146,7 @@ export async function addComment(comment: Comment) {
 
 export async function getAllComments(): Promise<Comment[]> {
     return new Promise((resolve) => {
-        const allCommentsData = getLocalStorage('comments', initialComments);
+        const allCommentsData = getLocalStorage('comments', {});
         const allComments = Object.entries(allCommentsData).flatMap(([slug, comments]) => 
             (comments as Comment[]).map(comment => ({
                 ...comment,
@@ -143,11 +158,11 @@ export async function getAllComments(): Promise<Comment[]> {
 }
 
 export async function getMe(): Promise<User | null> {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(getLocalStorage('currentUser', null));
-        }, 50);
-    });
+  return new Promise((resolve) => {
+      setTimeout(() => {
+          resolve(getLocalStorage('currentUser', null));
+      }, 50);
+  });
 }
 
 export async function loginUser(email: string): Promise<User | null> {
@@ -189,8 +204,9 @@ export async function signupUser(name: string, email: string): Promise<User> {
 export async function logoutUser() {
     return new Promise<void>((resolve) => {
         setTimeout(() => {
-            if (typeof window !== 'undefined') {
+            if (isBrowser) {
                 localStorage.removeItem('currentUser');
+                 window.dispatchEvent(new Event('storage'));
             }
             resolve();
         }, 50);
@@ -200,7 +216,7 @@ export async function logoutUser() {
 export async function updateUser(updatedUser: User): Promise<User> {
     return new Promise((resolve) => {
         setTimeout(() => {
-            let users = getLocalStorage('users', initialUsers);
+            let users = getLocalStorage('users', []);
             const userIndex = users.findIndex((u: User) => u.id === updatedUser.id);
             if (userIndex !== -1) {
                 users[userIndex] = updatedUser;
@@ -215,18 +231,107 @@ export async function updateUser(updatedUser: User): Promise<User> {
     });
 }
 
-
 export async function getUsers(): Promise<User[]> {
     return new Promise((resolve) => {
-      setTimeout(() => resolve(getLocalStorage('users', initialUsers)), 50);
+      setTimeout(() => resolve(getLocalStorage('users', [])), 50);
     });
 }
   
 export async function getUser(id: string): Promise<User | undefined> {
   return new Promise((resolve) => {
     setTimeout(() => {
-        const users = getLocalStorage('users', initialUsers);
+        const users = getLocalStorage('users', []);
         resolve(users.find((u: User) => u.id === id));
     }, 50);
+  });
+}
+
+export async function savePost(
+  data: { title: string; content: string; tags: string; slug?: string }
+): Promise<{ slug: string }> {
+  return new Promise(async (resolve, reject) => {
+    const me = await getMe();
+    if (!me) {
+      return reject(new Error('You must be logged in to create a post.'));
+    }
+
+    // Always fetch the latest posts from localStorage
+    const posts: Post[] = getLocalStorage('posts', []);
+    const { title, content, tags, slug } = data;
+
+    if (slug) {
+      // Editing existing post
+      const postIndex = posts.findIndex(p => p.slug === slug);
+      if (postIndex !== -1) {
+         if (posts[postIndex].author.id !== me.id) {
+             return reject(new Error('You do not have permission to edit this post.'));
+         }
+        posts[postIndex] = {
+          ...posts[postIndex],
+          title,
+          content,
+          tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+        };
+        setLocalStorage('posts', posts);
+        resolve({ slug });
+      } else {
+        reject(new Error('Post not found.'));
+      }
+    } else {
+      // Creating new post
+      const newSlug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '') + '-' + Date.now();
+      const newPost: Post = {
+        slug: newSlug,
+        title,
+        content,
+        author: me,
+        createdAt: new Date().toISOString(),
+        tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+        imageUrl: `https://picsum.photos/seed/${newSlug}/800/600`,
+        imageHint: 'abstract',
+        likes: 0,
+        commentsCount: 0,
+      };
+      posts.unshift(newPost);
+      setLocalStorage('posts', posts);
+      resolve({ slug: newSlug });
+    }
+  });
+}
+
+export async function deletePost(slug: string): Promise<void> {
+  return new Promise(async (resolve, reject) => {
+    const me = await getMe();
+    if (!me) {
+      return reject(new Error('You must be logged in to delete a post.'));
+    }
+
+    const posts: Post[] = getLocalStorage('posts', []);
+    const postToDelete = posts.find(p => p.slug === slug);
+
+    if (!postToDelete) {
+      return reject(new Error('Post not found.'));
+    }
+
+    if (postToDelete.author.id !== me.id) {
+      return reject(new Error('You do not have permission to delete this post.'));
+    }
+
+    // Filter out the post to be deleted
+    const updatedPosts = posts.filter(p => p.slug !== slug);
+    setLocalStorage('posts', updatedPosts);
+
+    // Remove associated comments
+    const allComments = getLocalStorage('comments', {});
+    if (allComments[slug]) {
+      delete allComments[slug];
+      setLocalStorage('comments', allComments);
+    }
+
+    // We can also remove it from liked and saved lists for all users
+    // This is a bit more complex in a localStorage simulation but good practice
+    // For now, we'll just delete the post and its comments
+
+    resolve();
   });
 }

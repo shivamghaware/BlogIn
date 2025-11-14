@@ -7,23 +7,37 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Bookmark, MessageCircle, Heart } from 'lucide-react';
+import { Bookmark, MessageCircle, Heart, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
+import { deletePost } from '@/lib/data';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 type PostCardProps = {
   post: Post;
+  showAuthor?: boolean;
+  onPostDelete?: (slug: string) => void;
 };
 
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post, showAuthor = true, onPostDelete }: PostCardProps) {
     const { toast } = useToast();
-    const router = useRouter();
     const [isBookmarked, setIsBookmarked] = useState(false);
     const [isLiked, setIsLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(post.likes);
+    const [isDeleting, startDeleteTransition] = useTransition();
 
     useEffect(() => {
       const savedPosts = JSON.parse(localStorage.getItem('savedPosts') || '[]');
@@ -94,9 +108,31 @@ export function PostCard({ post }: PostCardProps) {
         });
     }
 
+    const handleDelete = () => {
+        startDeleteTransition(async () => {
+            try {
+                await deletePost(post.slug);
+                toast({
+                    title: "Post Deleted",
+                    description: "The post has been successfully deleted.",
+                });
+                if(onPostDelete) {
+                    onPostDelete(post.slug);
+                }
+            } catch (error: any) {
+                 toast({
+                    title: "Error",
+                    description: error.message || "Could not delete the post.",
+                    variant: "destructive",
+                });
+            }
+        });
+    };
+
   return (
     <article className="group space-y-4">
-        <div className="flex items-center gap-2 text-sm">
+       {showAuthor && (
+         <div className="flex items-center gap-2 text-sm">
             <Link href={`/profile/${post.author.id}`} className="flex items-center gap-2">
                 <Avatar className="h-6 w-6">
                     <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
@@ -109,6 +145,7 @@ export function PostCard({ post }: PostCardProps) {
                 {format(new Date(post.createdAt), 'MMM d, yyyy')}
             </time>
         </div>
+       )}
         
         <div className="flex flex-col md:flex-row gap-8 w-full">
             <div className="flex-1">
@@ -141,6 +178,29 @@ export function PostCard({ post }: PostCardProps) {
                 <span className="text-sm text-muted-foreground hidden sm:inline">· 5 min read</span>
             </div>
             <div className="flex items-center gap-1">
+                {onPostDelete && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" disabled={isDeleting}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this post.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                                    {isDeleting ? 'Deleting...' : 'Delete'}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleLike}>
                     <Heart className={cn('h-4 w-4', isLiked && 'fill-destructive text-destructive')} />
                 </Button>

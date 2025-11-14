@@ -21,6 +21,7 @@ import type { User } from '@/lib/types';
 import { useTransition } from 'react';
 import { updateUser } from '@/lib/data';
 import { useRouter } from 'next/navigation';
+import { STORAGE_EVENT } from '@/lib/constants';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -65,7 +66,7 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
         description: 'Your profile has been successfully updated.',
       });
 
-      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event(STORAGE_EVENT));
       router.push(`/profile/${user.id}`);
       router.refresh();
     });

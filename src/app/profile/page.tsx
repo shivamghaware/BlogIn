@@ -4,78 +4,24 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/posts/PostCard';
-import { getMe, getPosts, getUsers, getAllComments } from '@/lib/data';
 import { Pen, Heart, Bookmark, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useEffect, useState, useCallback } from 'react';
-import type { User, Post, Comment } from '@/lib/types';
 import { UserListDialog } from '@/components/users/UserListDialog';
-import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-
+import { useUserProfile } from '@/hooks/use-user-profile';
+import { getInitials } from '@/lib/utils';
+import { MainContainer } from '@/components/layout/MainContainer';
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [userPosts, setUserPosts] = useState<Post[]>([]);
-  const [likedPosts, setLikedPosts] = useState<Post[]>([]);
-  const [savedPosts, setSavedPosts] = useState<Post[]>([]);
-  const [userComments, setUserComments] = useState<Comment[]>([]);
-  const [followers, setFollowers] = useState<User[]>([]);
-  const [following, setFollowing] = useState<User[]>([]);
-  const router = useRouter();
-
-  const fetchData = useCallback(async () => {
-    const me = await getMe();
-    if (!me) {
-      router.push('/login');
-      return;
-    }
-    setUser(me);
-
-    const [allPosts, allUsers, allComments] = await Promise.all([getPosts(), getUsers(), getAllComments()]);
-
-    setUserPosts(allPosts.filter((post) => post.author.id === me.id));
-    
-    const likedPostSlugs = JSON.parse(localStorage.getItem('likedPosts') || '[]');
-    const savedPostSlugs = JSON.parse(localStorage.getItem('savedPosts') || '[]');
-    
-    setLikedPosts(allPosts.filter(post => likedPostSlugs.includes(post.slug)));
-    setSavedPosts(allPosts.filter(post => savedPostSlugs.includes(post.slug)));
-
-    setUserComments(allComments.filter(comment => comment.author.id === me.id));
-
-    const followerIds = JSON.parse(localStorage.getItem(`followedBy-${me.id}`) || '[]');
-    setFollowers(allUsers.filter(u => followerIds.includes(u.id)));
-
-    const followingIds = JSON.parse(localStorage.getItem('followedUsers') || '[]');
-    setFollowing(allUsers.filter(u => followingIds.includes(u.id)));
-  }, [router]);
-
-  useEffect(() => {
-    fetchData();
-
-    window.addEventListener('storage', fetchData);
-    window.addEventListener('logout', fetchData);
-
-    return () => {
-      window.removeEventListener('storage', fetchData);
-      window.removeEventListener('logout', fetchData);
-    };
-  }, [fetchData]);
+  const { user, userPosts, likedPosts, savedPosts, userComments, followers, following, handlePostDelete } = useUserProfile();
 
   if (!user) {
     return <div>Loading...</div>;
   }
 
-  const getInitials = (name: string) => {
-    const [firstName, lastName] = name.split(' ');
-    return firstName && lastName ? `${firstName[0]}${lastName[0]}` : name.substring(0, 2);
-  };
-
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="max-w-4xl mx-auto">
+    <MainContainer>
         <header className="flex flex-col items-center md:flex-row md:items-start gap-8 py-12">
           <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background ring-2 ring-primary">
             <AvatarImage src={user.avatarUrl} alt={user.name} />
@@ -131,7 +77,12 @@ export default function ProfilePage() {
                     {userPosts.length > 0 ? (
                         <div className="grid gap-16">
                         {userPosts.map((post) => (
-                            <PostCard key={post.slug} post={post} />
+                            <PostCard 
+                                key={post.slug} 
+                                post={post} 
+                                showAuthor={false} 
+                                onPostDelete={handlePostDelete}
+                            />
                         ))}
                         </div>
                     ) : (
@@ -193,7 +144,6 @@ export default function ProfilePage() {
                 </TabsContent>
             </Tabs>
         </div>
-      </div>
-    </div>
+    </MainContainer>
   );
 }

@@ -14,10 +14,7 @@ import {
 } from '@/components/ui/command';
 import type { Post, User as UserType } from '@/lib/types';
 import { getPosts, getUsers } from '@/lib/data';
-import Link from 'next/link';
-import { Command as CommandPrimitive } from 'cmdk';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 type GlobalSearchProps = {
     open: boolean;
@@ -91,7 +88,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
               <CommandItem
                 key={post.slug}
                 value={`post-${post.slug}-${post.title}`}
-                onSelect={() => handleSelect(`/posts/${post.slug}`)}
+                onSelect={() => handleSelect(`/p/${post.slug}`)}
               >
                 <FileText className="mr-2 h-4 w-4" />
                 <span>{post.title}</span>

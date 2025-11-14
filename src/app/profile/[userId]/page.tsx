@@ -137,6 +137,11 @@ export default function UserProfilePage() {
     });
   };
 
+   const handlePostDelete = (slug: string) => {
+    setUserPosts(prevPosts => prevPosts.filter(post => post.slug !== slug));
+  };
+
+
   if (user === null) {
       return <div>Loading profile...</div>;
   }
@@ -199,7 +204,12 @@ export default function UserProfilePage() {
               {userPosts.length > 0 ? (
                 <div className="grid gap-16">
                   {userPosts.map((post) => (
-                    <PostCard key={post.slug} post={post} />
+                    <PostCard 
+                        key={post.slug} 
+                        post={post}
+                        showAuthor={false}
+                        onPostDelete={isOwnProfile ? handlePostDelete : undefined}
+                    />
                   ))}
                 </div>
               ) : (

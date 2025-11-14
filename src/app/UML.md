@@ -8,23 +8,19 @@ This document provides a set of UML diagrams to illustrate the architecture, use
 
 ```mermaid
 graph TD
-    A(User) --> (Sign Up)
-    A --> (Log In)
-    A --> (Log Out)
-    A --> (View Posts)
-    A --> (Search)
-
-    subgraph "Authenticated User"
-        A --> (Create Post)
-        A --> (Edit Post)
-        A --> (Comment on Post)
-        A --> (Like Post)
-        A --> (Save Post)
-        A --> (Follow User)
-        A --> (Edit Profile)
-    end
-
-    (Create Post) --> (Get AI Category Suggestions)
+    User --> SignUp[Sign Up]
+    User --> LogIn[Log In]
+    User --> LogOut[Log Out]
+    User --> ViewPosts[View Posts]
+    User --> Search
+    User --> CreatePost[Create Post]
+    User --> EditPost[Edit Post]
+    User --> CommentOnPost[Comment on Post]
+    User --> LikePost[Like Post]
+    User --> SavePost[Save Post]
+    User --> FollowUser[Follow User]
+    User --> EditProfile[Edit Profile]
+    CreatePost --> GetAICategorySuggestions[Get AI Category Suggestions]
 ```
 
 ## Component Diagram
@@ -32,21 +28,21 @@ graph TD
 **Description:** This diagram illustrates the high-level architecture of the application, showing the main components and their dependencies. It highlights the separation between the frontend UI, the AI services, and the simulated data layer.
 
 ```mermaid
-componentDiagram
-    package "Browser" {
-        [Next.js Frontend]
-    }
+flowchart TB
+  subgraph Browser
+    A[Next.js Frontend]
+  end
 
-    package "Server" {
-        [Genkit AI Flows]
-    }
+  subgraph Server
+    B[Genkit AI Flows]
+  end
 
-    database "LocalStorage" {
-        [Data Simulation]
-    }
+  subgraph LocalStorage
+    C[(Data Simulation)]
+  end
 
-    [Next.js Frontend] --> [Genkit AI Flows] : Calls AI for suggestions
-    [Next.js Frontend] --> [Data Simulation] : Reads/Writes Data
+  A -->|Calls AI for suggestions| B
+  A -->|Reads / Writes data| C
 ```
 
 ## Sequence Diagram: Create a New Post
@@ -55,25 +51,23 @@ componentDiagram
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant PostCreator as "PostCreator Component"
-    participant suggestCategoriesAction as "AI Action"
-    participant Genkit as "Genkit Flow"
-    participant Data as "Data Layer (localStorage)"
-
-    User->>PostCreator: Fills out Title and Content
-    User->>PostCreator: Clicks "Suggest Categories"
-    PostCreator->>suggestCategoriesAction: Calls with post content
-    suggestCategoriesAction->>Genkit: Executes suggestPostCategory flow
-    Genkit-->>suggestCategoriesAction: Returns categories
-    suggestCategoriesAction-->>PostCreator: Returns suggestions
-    PostCreator->>User: Displays suggested categories
-
-    User->>PostCreator: Fills out Tags
-    User->>PostCreator: Clicks "Publish Post"
-    PostCreator->>Data: Saves new post
-    Data-->>PostCreator: Confirms save
-    PostCreator->>User: Redirects to new post page
+    participant U as User
+    participant PC as PostCreator
+    participant SAA as AI Action
+    participant G as Genkit Flow
+    participant D as Data Layer
+    U->>PC: Fills out Title and Content
+    U->>PC: Clicks "Suggest Categories"
+    PC->>SAA: Calls with post content
+    SAA->>G: Executes suggestPostCategory flow
+    G-->>SAA: Returns categories
+    SAA-->>PC: Returns suggestions
+    PC->>U: Displays suggested categories
+    U->>PC: Fills out Tags
+    U->>PC: Clicks "Publish Post"
+    PC->>D: Saves new post
+    D-->>PC: Confirms save
+    PC->>U: Redirects to new post page
 ```
 
 ## Entity-Relationship Diagram (ERD)
@@ -89,7 +83,6 @@ erDiagram
         string avatarUrl
         string bio
     }
-
     POST {
         string slug PK
         string title
@@ -98,7 +91,6 @@ erDiagram
         string imageUrl
         string userId FK
     }
-
     COMMENT {
         string id PK
         string text
@@ -106,7 +98,6 @@ erDiagram
         string userId FK
         string postSlug FK
     }
-
     USER ||--o{ POST : authors
     USER ||--o{ COMMENT : writes
     POST ||--o{ COMMENT : has
