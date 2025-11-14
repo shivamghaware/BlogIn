@@ -29,17 +29,17 @@ graph TD
 
 ```mermaid
 componentDiagram
-    package "Browser" {
-        [Next.js Frontend]
-    }
-    package "Server" {
-        [Genkit AI Flows]
-    }
-    database "LocalStorage" {
-        [Data Simulation]
-    }
-    [Next.js Frontend] --> [Genkit AI Flows]
-    [Next.js Frontend] --> [Data Simulation]
+package "Browser" {
+    [Next.js Frontend]
+}
+package "Server" {
+    [Genkit AI Flows]
+}
+database "LocalStorage" {
+    [Data Simulation]
+}
+[Next.js Frontend] --> [Genkit AI Flows] : Calls AI for suggestions
+[Next.js Frontend] --> [Data Simulation] : Reads/Writes Data
 ```
 
 ## Sequence Diagram: Create a New Post
