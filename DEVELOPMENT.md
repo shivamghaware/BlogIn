@@ -76,21 +76,13 @@ npm run start
 This diagram illustrates the high-level architecture, showing the main components and their dependencies.
 
 ```mermaid
-componentDiagram
-    package "Browser" {
-        [Next.js Frontend]
-    }
+flowchart LR
+    A[Browser\nNext.js Frontend]
+    B[Server\nGenkit AI Flows]
+    C[(LocalStorage\nData Simulation)]
 
-    package "Server" {
-        [Genkit AI Flows]
-    }
-
-    database "LocalStorage" {
-        [Data Simulation]
-    }
-
-    [Next.js Frontend] --> [Genkit AI Flows] : Calls AI for suggestions
-    [Next.js Frontend] --> [Data Simulation] : Reads/Writes Data
+    A -->|Calls AI for suggestions| B
+    A -->|Reads/Writes Data| C
 ```
 
 ### 3.3. Project Structure
@@ -122,23 +114,25 @@ This diagram shows the primary actors and their interactions with the system.
 
 ```mermaid
 graph TD
-    A(User) --> (Sign Up)
-    A --> (Log In)
-    A --> (Log Out)
-    A --> (View Posts)
-    A --> (Search)
+    user[User]
 
-    subgraph "Authenticated User"
-        A --> (Create Post)
-        A --> (Edit Post)
-        A --> (Comment on Post)
-        A --> (Like Post)
-        A --> (Save Post)
-        A --> (Follow User)
-        A --> (Edit Profile)
+    user --> signUp[Sign Up]
+    user --> login[Log In]
+    user --> logout[Log Out]
+    user --> viewPosts[View Posts]
+    user --> search[Search]
+
+    subgraph Authenticated_User
+        user --> createPost[Create Post]
+        user --> editPost[Edit Post]
+        user --> comment[Comment on Post]
+        user --> like[Like Post]
+        user --> save[Save Post]
+        user --> follow[Follow User]
+        user --> editProfile[Edit Profile]
     end
 
-    (Create Post) --> (Get AI Category Suggestions)
+    createPost --> aiSuggest[Get AI Category Suggestions]
 ```
 
 ### 4.3. Data Model (ERD)
