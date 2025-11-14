@@ -1,0 +1,40 @@
+Project Name: BlogIn
+
+Description: 
+BlogIn is a feature-rich, full-stack blogging application built with modern web technologies. It provides a modern platform for writers and readers to connect and share ideas.
+
+Key Features:
+- **User Authentication**: Secure sign-up and login functionality.
+- **Profile Management**: Users can create and edit their profiles, including name, bio, and avatar.
+- **Post Creation & Editing**: A rich text editor allows users to write, edit, and publish posts with markdown-style formatting.
+- **AI-Powered Suggestions**: Utilizes Genkit to provide AI-driven category suggestions for new posts based on their content.
+- **Interactive Feed**: A dynamic homepage that displays all posts and allows filtering by tags.
+- **Post Interaction**: Users can like, save (bookmark), and comment on posts.
+- **User Profiles**: Comprehensive profile pages that display a user's posts, comments, likes, saved posts, followers, and following lists.
+- **Social Features**: Users can follow and unfollow other authors.
+- **Global Search**: A powerful command menu (`Cmd+K` or `Ctrl+K`) to search for posts, users, and topics.
+- **Theming**: Light and dark mode support.
+
+Skills:
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Genkit
+
+Media:
+Media like images, documents, or links to the live site can be added here.
+
+Additional details:
+The project uses Vercel for analytics and is designed to be easily deployable. It features a local-first development approach using localStorage to simulate a database, allowing for rapid prototyping and offline use.
+
+I am currently working on this project: Yes
+
+Start date: [Please fill in]
+End date: [Please fill in]
+
+Contributors:
+[Please add contributors]
+
+Associated with:
+[Please add association]
