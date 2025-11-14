@@ -28,18 +28,17 @@ graph TD
 **Description:** This diagram illustrates the high-level architecture of the application, showing the main components and their dependencies. It highlights the separation between the frontend UI, the AI services, and the simulated data layer.
 
 ```mermaid
-componentDiagram
-package "Browser" {
-    [Next.js Frontend]
-}
-package "Server" {
-    [Genkit AI Flows]
-}
-database "LocalStorage" {
-    [Data Simulation]
-}
-[Next.js Frontend] --> [Genkit AI Flows] : Calls AI for suggestions
-[Next.js Frontend] --> [Data Simulation] : Reads/Writes Data
+C4Component
+Container(browser, "Browser", "Next.js", "Client-side UI")
+Container(server, "Server", "Node/Server", "Handles AI flows (Genkit)")
+ContainerDb(storage, "LocalStorage", "Browser Storage", "Simulated data layer")
+
+Component(frontend, "Next.js Frontend", "React/Next.js app")
+Component(aiFlows, "Genkit AI Flows", "AI suggestion engine")
+Component(dataSim, "Data Simulation", "Mock data source")
+
+Rel(frontend, aiFlows, "Calls AI for suggestions")
+Rel(frontend, dataSim, "Reads/Writes data")
 ```
 
 ## Sequence Diagram: Create a New Post
