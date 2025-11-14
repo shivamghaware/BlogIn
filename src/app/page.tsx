@@ -1,71 +1,42 @@
 
 'use client';
 
-import { useState, useEffect, Suspense, useCallback } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PostCard } from "@/components/posts/PostCard";
-import { getPosts } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
-import type { Post } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { usePosts } from '@/hooks/use-posts';
+import { POPSTATE_EVENT, TAG_SEARCH_PARAM } from '@/lib/constants';
+import { MainContainer } from '@/components/layout/MainContainer';
 
 function HomePageContent() {
   const searchParams = useSearchParams();
-  const tagFromUrl = searchParams.get('tag');
+  const tagFromUrl = searchParams.get(TAG_SEARCH_PARAM);
 
-  const [allPosts, setAllPosts] = useState<Post[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
-  const [allTags, setAllTags] = useState<string[]>([]);
-  const [activeTag, setActiveTag] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    const posts = await getPosts();
-    posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    
-    setAllPosts(posts);
-    const tags = [...new Set(posts.flatMap((post) => post.tags))];
-    setAllTags(tags);
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-    window.addEventListener('storage', fetchData);
-    return () => window.removeEventListener('storage', fetchData);
-  }, [fetchData]);
-
-  useEffect(() => {
-    if (tagFromUrl) {
-      setActiveTag(tagFromUrl);
-      setFilteredPosts(allPosts.filter(post => post.tags.includes(tagFromUrl)));
-    } else {
-      setActiveTag(null);
-      setFilteredPosts(allPosts);
-    }
-  }, [tagFromUrl, allPosts]);
-
+  const { filteredPosts, allTags } = usePosts(tagFromUrl);
 
   const handleTagClick = (tag: string) => {
     const current = new URL(window.location.href);
-    if (activeTag === tag) {
-      current.searchParams.delete('tag');
+    if (tagFromUrl === tag) {
+      current.searchParams.delete(TAG_SEARCH_PARAM);
     } else {
-      current.searchParams.set('tag', tag);
+      current.searchParams.set(TAG_SEARCH_PARAM, tag);
     }
     window.history.pushState({}, '', current.toString());
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    window.dispatchEvent(new PopStateEvent(POPSTATE_EVENT));
   };
   
   const clearFilter = () => {
     const current = new URL(window.location.href);
-    current.searchParams.delete('tag');
+    current.searchParams.delete(TAG_SEARCH_PARAM);
     window.history.pushState({}, '', current.toString());
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    window.dispatchEvent(new PopStateEvent(POPSTATE_EVENT));
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="max-w-4xl mx-auto">
+    <MainContainer>
         <header className="py-12 text-center">
           <h1 className="text-5xl md:text-7xl font-bold font-headline tracking-tighter">Stay curious.</h1>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -76,7 +47,7 @@ function HomePageContent() {
         <div className="border-b pb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground">Trending topics</h2>
-            {activeTag && (
+            {tagFromUrl && (
                 <Button variant="ghost" size="sm" onClick={clearFilter} className="text-muted-foreground hover:text-foreground">
                     <X className="mr-2 h-4 w-4" />
                     Clear filter
@@ -87,7 +58,7 @@ function HomePageContent() {
             {allTags.map((tag) => (
               <Badge 
                 key={tag} 
-                variant={activeTag === tag ? 'default' : 'secondary'} 
+                variant={tagFromUrl === tag ? 'default' : 'secondary'} 
                 className="text-sm font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
                 onClick={() => handleTagClick(tag)}
               >
@@ -102,8 +73,7 @@ function HomePageContent() {
             <PostCard key={post.slug} post={post} />
           ))}
         </div>
-      </div>
-    </div>
+    </MainContainer>
   );
 }
 
