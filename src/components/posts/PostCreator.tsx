@@ -5,7 +5,7 @@ import { useState, useTransition, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { suggestCategoriesAction } from '@/lib/actions';
+import { suggestPostCategory } from '@/ai/flows/suggest-post-category';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -87,7 +87,7 @@ export function PostCreator({ post }: PostCreatorProps) {
     }
     setIsLoadingSuggestions(true);
     try {
-      const result = await suggestCategoriesAction({ postContent: content });
+      const result = await suggestPostCategory({ postContent: content });
       if (result.categories) {
         setSuggestions(result.categories);
       }

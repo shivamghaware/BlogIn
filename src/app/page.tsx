@@ -1,13 +1,12 @@
 
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PostCard } from "@/components/posts/PostCard";
 import { getPosts } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import type { Post } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 
@@ -20,37 +19,48 @@ function HomePageContent() {
   const [allTags, setAllTags] = useState<string[]>([]);
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
+  const fetchData = useCallback(async () => {
+    const posts = await getPosts();
+    posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    setAllPosts(posts);
+    const tags = [...new Set(posts.flatMap((post) => post.tags))];
+    setAllTags(tags);
+  }, []);
+
   useEffect(() => {
-    async function fetchData() {
-      const posts = await getPosts();
-      setAllPosts(posts);
-      const tags = [...new Set(posts.flatMap((post) => post.tags))];
-      setAllTags(tags);
-
-      if (tagFromUrl) {
-        setActiveTag(tagFromUrl);
-        setFilteredPosts(posts.filter(post => post.tags.includes(tagFromUrl)));
-      } else {
-        setFilteredPosts(posts);
-      }
-    }
     fetchData();
-  }, [tagFromUrl]);
+    window.addEventListener('storage', fetchData);
+    return () => window.removeEventListener('storage', fetchData);
+  }, [fetchData]);
 
-  const handleTagClick = (tag: string) => {
-    if (activeTag === tag) {
-      // If the same tag is clicked again, reset the filter
+  useEffect(() => {
+    if (tagFromUrl) {
+      setActiveTag(tagFromUrl);
+      setFilteredPosts(allPosts.filter(post => post.tags.includes(tagFromUrl)));
+    } else {
       setActiveTag(null);
       setFilteredPosts(allPosts);
-    } else {
-      setActiveTag(tag);
-      setFilteredPosts(allPosts.filter(post => post.tags.includes(tag)));
     }
+  }, [tagFromUrl, allPosts]);
+
+
+  const handleTagClick = (tag: string) => {
+    const current = new URL(window.location.href);
+    if (activeTag === tag) {
+      current.searchParams.delete('tag');
+    } else {
+      current.searchParams.set('tag', tag);
+    }
+    window.history.pushState({}, '', current.toString());
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
   
   const clearFilter = () => {
-    setActiveTag(null);
-    setFilteredPosts(allPosts);
+    const current = new URL(window.location.href);
+    current.searchParams.delete('tag');
+    window.history.pushState({}, '', current.toString());
+    window.dispatchEvent(new PopStateEvent('popstate'));
   }
 
   return (

@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
 
 type PostCardProps = {
   post: Post;
@@ -20,7 +19,6 @@ type PostCardProps = {
 
 export function PostCard({ post }: PostCardProps) {
     const { toast } = useToast();
-    const router = useRouter();
     const [isBookmarked, setIsBookmarked] = useState(false);
     const [isLiked, setIsLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(post.likes);

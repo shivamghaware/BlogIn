@@ -1,18 +1,6 @@
 
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import { suggestPostCategory, SuggestPostCategoryInput, SuggestPostCategoryOutput } from '@/ai/flows/suggest-post-category';
-
-export async function suggestCategoriesAction(
-  input: SuggestPostCategoryInput
-): Promise<SuggestPostCategoryOutput> {
-  try {
-    const result = await suggestPostCategory(input);
-    return result;
-  } catch (error) {
-    console.error('Error suggesting categories:', error);
-    return { categories: [] };
-  }
-}
+// This file is intentionally left blank.
+// All data operations that require browser localStorage have been moved to client-side functions in data.ts
+// AI-related flows are called directly from client components.
