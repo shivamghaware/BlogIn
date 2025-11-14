@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState, useTransition, useRef, useEffect } from 'react';
+import { useState, useTransition, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { createPostAction, suggestCategoriesAction } from '@/lib/actions';
+import { suggestCategoriesAction } from '@/lib/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,7 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Bold, Italic, Heading2, Heading3, Heading4 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getPost } from '@/lib/data';
+import { savePost } from '@/lib/data';
 import { useRouter } from 'next/navigation';
 import type { Post } from '@/lib/types';
 
@@ -112,26 +112,30 @@ export function PostCreator({ post }: PostCreatorProps) {
   };
 
   const onSubmit = (data: PostFormValues) => {
-    startTransition(() => {
-        const formData = new FormData();
-        formData.append('title', data.title);
-        formData.append('content', data.content);
-        formData.append('tags', data.tags || '');
-        if (post?.slug) {
-            formData.append('slug', post.slug);
-        }
-        
-        createPostAction(formData);
+    startTransition(async () => {
+      try {
+        const { slug } = await savePost({
+            title: data.title,
+            content: data.content,
+            tags: data.tags || '',
+            slug: post?.slug,
+        });
 
         toast({
             title: post ? "Post Updated!" : "Post Published!",
             description: post ? "Your changes have been saved." : "Your post is now live.",
         });
         
-        // This will redirect to the new post if it's created, or the edited post
-        // A more robust solution would get the returned slug from createPostAction
-        router.push(post ? `/p/${post.slug}` : `/`);
+        router.push(`/p/${slug}`);
         router.refresh();
+
+      } catch (error: any) {
+         toast({
+            title: "Error",
+            description: error.message || "Something went wrong.",
+            variant: "destructive",
+        });
+      }
     });
   };
 

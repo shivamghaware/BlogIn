@@ -74,6 +74,7 @@ const setLocalStorage = (key: string, value: any) => {
     if (typeof window !== 'undefined') {
         try {
             localStorage.setItem(key, JSON.stringify(value));
+            window.dispatchEvent(new Event('storage'));
         } catch (error) {
             console.error(`Error setting localStorage key "${key}":`, error);
         }
@@ -81,10 +82,16 @@ const setLocalStorage = (key: string, value: any) => {
 }
 
 // Initialize data if it doesn't exist
-if (typeof window !== 'undefined' && !localStorage.getItem('users')) {
+if (typeof window !== 'undefined') {
+  if (!localStorage.getItem('users')) {
     setLocalStorage('users', initialUsers);
+  }
+  if (!localStorage.getItem('posts')) {
     setLocalStorage('posts', initialPosts);
+  }
+  if (!localStorage.getItem('comments')) {
     setLocalStorage('comments', initialComments);
+  }
 }
 
 // Simulated API calls
@@ -123,7 +130,6 @@ export async function addComment(comment: Comment) {
       const newPostComments = [comment, ...postComments];
       allComments[comment.postSlug] = newPostComments;
       setLocalStorage('comments', allComments);
-      window.dispatchEvent(new Event('storage'));
       resolve(comment);
     }, 50);
   });
@@ -215,7 +221,6 @@ export async function updateUser(updatedUser: User): Promise<User> {
     });
 }
 
-
 export async function getUsers(): Promise<User[]> {
     return new Promise((resolve) => {
       setTimeout(() => resolve(getLocalStorage('users', initialUsers)), 50);
@@ -228,5 +233,55 @@ export async function getUser(id: string): Promise<User | undefined> {
         const users = getLocalStorage('users', initialUsers);
         resolve(users.find((u: User) => u.id === id));
     }, 50);
+  });
+}
+
+
+export async function savePost(
+  data: { title: string; content: string; tags: string; slug?: string }
+): Promise<{ slug: string }> {
+  return new Promise(async (resolve, reject) => {
+    const me = await getMe();
+    if (!me) {
+      return reject(new Error('You must be logged in to create a post.'));
+    }
+
+    const posts: Post[] = await getPosts();
+    const { title, content, tags, slug } = data;
+
+    if (slug) {
+      // Editing existing post
+      const postIndex = posts.findIndex(p => p.slug === slug);
+      if (postIndex !== -1 && posts[postIndex].author.id === me.id) {
+        posts[postIndex] = {
+          ...posts[postIndex],
+          title,
+          content,
+          tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+        };
+        setLocalStorage('posts', posts);
+        resolve({ slug });
+      } else {
+        reject(new Error('Post not found or you do not have permission to edit it.'));
+      }
+    } else {
+      // Creating new post
+      const newSlug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+      const newPost: Post = {
+        slug: newSlug,
+        title,
+        content,
+        author: me,
+        createdAt: new Date().toISOString(),
+        tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+        imageUrl: `https://picsum.photos/seed/${newSlug}/800/600`,
+        imageHint: 'abstract',
+        likes: 0,
+        commentsCount: 0,
+      };
+      posts.unshift(newPost);
+      setLocalStorage('posts', posts);
+      resolve({ slug: newSlug });
+    }
   });
 }
