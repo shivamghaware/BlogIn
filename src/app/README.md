@@ -1,6 +1,6 @@
 # BlogIn: A Modern Blogging Platform
 
-BlogIn is a feature-rich, modern blogging platform built with Next.js, React, and Google's Genkit. It provides a clean, intuitive interface for writers to create and share their stories, and for readers to discover, engage with, and follow their favorite authors. The application is designed to be performant, aesthetically pleasing, and highly interactive.
+BlogIn is a feature-rich, modern blogging platform built with Next.js and React. It provides a clean, intuitive interface for writers to create and share their stories, and for readers to discover, engage with, and follow their favorite authors. The application is designed to be performant, aesthetically pleasing, and highly interactive.
 
 For a visual representation of the project architecture, please see the [UML Diagrams](uml.md).
 
@@ -9,7 +9,6 @@ For a visual representation of the project architecture, please see the [UML Dia
 - **User Authentication**: Secure sign-up and login functionality.
 - **Profile Management**: Users can create and edit their profiles, including name, bio, and avatar.
 - **Post Creation & Editing**: A rich text editor allows users to write, edit, and publish posts with markdown-style formatting.
-- **AI-Powered Suggestions**: Utilizes Genkit to provide AI-driven category suggestions for new posts based on their content.
 - **Interactive Feed**: A dynamic homepage that displays all posts and allows filtering by tags.
 - **Post Interaction**: Users can like, save (bookmark), and comment on posts.
 - **User Profiles**: Comprehensive profile pages that display a user's posts, comments, likes, saved posts, followers, and following lists.
@@ -23,7 +22,6 @@ For a visual representation of the project architecture, please see the [UML Dia
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
-- **Generative AI**: [Genkit](https://firebase.google.com/docs/genkit) (for AI-powered features)
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Forms**: [React Hook Form](https://react-hook-form.com/) & [Zod](https://zod.dev/) for validation
 
@@ -51,10 +49,6 @@ The project follows a standard Next.js App Router structure. Here are the key di
   - **`actions.ts`**: Server Actions for handling form submissions like creating and updating posts.
   - **`types.ts`**: Defines the core TypeScript types used throughout the application.
   - **`utils.ts`**: Utility functions, including the `cn` function for merging Tailwind classes.
-
-- **`src/ai/`**: Contains all the Genkit-related code for AI features.
-  - **`genkit.ts`**: Initializes and configures the Genkit AI instance.
-  - **`/flows/`**: Defines the AI flows, such as the one for suggesting post categories.
 
 ## Data Simulation
 

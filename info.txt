@@ -7,7 +7,6 @@ Key Features:
 - **User Authentication**: Secure sign-up and login functionality.
 - **Profile Management**: Users can create and edit their profiles, including name, bio, and avatar.
 - **Post Creation & Editing**: A rich text editor allows users to write, edit, and publish posts with markdown-style formatting.
-- **AI-Powered Suggestions**: Utilizes Genkit to provide AI-driven category suggestions for new posts based on their content.
 - **Interactive Feed**: A dynamic homepage that displays all posts and allows filtering by tags.
 - **Post Interaction**: Users can like, save (bookmark), and comment on posts.
 - **User Profiles**: Comprehensive profile pages that display a user's posts, comments, likes, saved posts, followers, and following lists.
@@ -20,7 +19,6 @@ Skills:
 - React
 - TypeScript
 - Tailwind CSS
-- Genkit
 
 Media:
 Media like images, documents, or links to the live site can be added here.
