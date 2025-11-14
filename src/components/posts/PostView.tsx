@@ -7,14 +7,26 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Bookmark, Pen } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, Pen, Trash2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { CommentSection } from '@/components/comments/CommentSection';
 import Link from 'next/link';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { getMe, addComment } from '@/lib/data';
+import { getMe, addComment, deletePost } from '@/lib/data';
+import { useRouter } from 'next/navigation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 type PostViewProps = {
   post: Post;
@@ -23,12 +35,14 @@ type PostViewProps = {
 
 export default function PostView({ post, comments: initialComments }: PostViewProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes);
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [isFollowing, setIsFollowing] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isDeleting, startDeleteTransition] = useTransition();
 
   const fetchAndSetState = useCallback(async () => {
     const me = await getMe();
@@ -163,6 +177,26 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
     await addComment(comment);
     setComments(prev => [comment, ...prev]);
   };
+
+  const handleDeletePost = () => {
+    startDeleteTransition(async () => {
+      try {
+        await deletePost(post.slug);
+        toast({
+          title: "Post Deleted",
+          description: "Your post has been successfully deleted.",
+        });
+        router.push('/');
+        router.refresh();
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Could not delete the post.",
+          variant: "destructive",
+        });
+      }
+    });
+  };
   
   const isOwnPost = currentUser?.id === post.author.id;
 
@@ -216,12 +250,37 @@ export default function PostView({ post, comments: initialComments }: PostViewPr
             </div>
           </div>
            {isOwnPost ? (
-            <Link href={`/p/${post.slug}/edit`}>
-              <Button variant="outline">
-                <Pen className="mr-2 h-4 w-4" />
-                Edit Post
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href={`/p/${post.slug}/edit`}>
+                <Button variant="outline">
+                  <Pen className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={isDeleting}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete your
+                      post and remove its data from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeletePost} disabled={isDeleting}>
+                      Yes, delete post
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           ) : currentUser && (
             <Button variant={isFollowing ? 'default' : 'outline'} onClick={handleFollowToggle}>
               {isFollowing ? 'Following' : 'Follow'}

@@ -88,22 +88,17 @@ const setLocalStorage = <T>(key:string, value: T) => {
 
 // --- Data Initialization ---
 
-// A flag to ensure seeding happens only once per session
-let isSeeded = false;
-
 const initializeData = () => {
-  if (!isBrowser || isSeeded) return;
+  if (!isBrowser) return;
 
-  if (localStorage.getItem('users') === null) {
+  const appDataInitialized = localStorage.getItem('appDataInitialized');
+
+  if (!appDataInitialized) {
     setLocalStorage('users', initialUsers);
-  }
-  if (localStorage.getItem('posts') === null) {
     setLocalStorage('posts', initialPosts);
-  }
-  if (localStorage.getItem('comments') === null) {
     setLocalStorage('comments', initialComments);
+    localStorage.setItem('appDataInitialized', 'true');
   }
-  isSeeded = true;
 };
 
 // Initialize data on load
@@ -113,14 +108,12 @@ initializeData();
 // --- Simulated API Calls ---
 
 export async function getPosts(): Promise<Post[]> {
-  initializeData();
   return new Promise((resolve) => {
     setTimeout(() => resolve(getLocalStorage('posts', [])), 50);
   });
 }
 
 export async function getPost(slug: string): Promise<Post | null> {
-  initializeData();
   return new Promise((resolve) => {
     setTimeout(() => {
       const posts = getLocalStorage('posts', []);
@@ -131,7 +124,6 @@ export async function getPost(slug: string): Promise<Post | null> {
 }
 
 export async function getComments(slug: string): Promise<Comment[]> {
-  initializeData();
   return new Promise((resolve) => {
     const allComments = getLocalStorage('comments', {});
     const postComments = (allComments[slug] || []).sort((a: Comment, b: Comment) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -153,7 +145,6 @@ export async function addComment(comment: Comment): Promise<Comment> {
 }
 
 export async function getAllComments(): Promise<Comment[]> {
-    initializeData();
     return new Promise((resolve) => {
         const allCommentsData = getLocalStorage('comments', {});
         const allComments = Object.entries(allCommentsData).flatMap(([slug, comments]) => 
@@ -241,14 +232,12 @@ export async function updateUser(updatedUser: User): Promise<User> {
 }
 
 export async function getUsers(): Promise<User[]> {
-    initializeData();
     return new Promise((resolve) => {
       setTimeout(() => resolve(getLocalStorage('users', [])), 50);
     });
 }
   
 export async function getUser(id: string): Promise<User | undefined> {
-  initializeData();
   return new Promise((resolve) => {
     setTimeout(() => {
         const users = getLocalStorage('users', []);
@@ -307,5 +296,42 @@ export async function savePost(
       setLocalStorage('posts', posts);
       resolve({ slug: newSlug });
     }
+  });
+}
+
+export async function deletePost(slug: string): Promise<void> {
+  return new Promise(async (resolve, reject) => {
+    const me = await getMe();
+    if (!me) {
+      return reject(new Error('You must be logged in to delete a post.'));
+    }
+
+    const posts: Post[] = getLocalStorage('posts', []);
+    const postToDelete = posts.find(p => p.slug === slug);
+
+    if (!postToDelete) {
+      return reject(new Error('Post not found.'));
+    }
+
+    if (postToDelete.author.id !== me.id) {
+      return reject(new Error('You do not have permission to delete this post.'));
+    }
+
+    // Filter out the post to be deleted
+    const updatedPosts = posts.filter(p => p.slug !== slug);
+    setLocalStorage('posts', updatedPosts);
+
+    // Remove associated comments
+    const allComments = getLocalStorage('comments', {});
+    if (allComments[slug]) {
+      delete allComments[slug];
+      setLocalStorage('comments', allComments);
+    }
+
+    // We can also remove it from liked and saved lists for all users
+    // This is a bit more complex in a localStorage simulation but good practice
+    // For now, we'll just delete the post and its comments
+
+    resolve();
   });
 }
