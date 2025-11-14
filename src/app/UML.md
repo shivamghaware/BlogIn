@@ -20,12 +20,11 @@ graph TD
     User --> SavePost[Save Post]
     User --> FollowUser[Follow User]
     User --> EditProfile[Edit Profile]
-    CreatePost --> GetAICategorySuggestions[Get AI Category Suggestions]
 ```
 
 ## Component Diagram
 
-**Description:** This diagram illustrates the high-level architecture of the application, showing the main components and their dependencies. It highlights the separation between the frontend UI, the AI services, and the simulated data layer.
+**Description:** This diagram illustrates the high-level architecture of the application, showing the main components and their dependencies. It highlights the separation between the frontend UI and the simulated data layer.
 
 ```mermaid
 flowchart TB
@@ -33,36 +32,23 @@ flowchart TB
     A[Next.js Frontend]
   end
 
-  subgraph Server
-    B[Genkit AI Flows]
-  end
-
   subgraph LocalStorage
     C[(Data Simulation)]
   end
 
-  A -->|Calls AI for suggestions| B
   A -->|Reads / Writes data| C
 ```
 
 ## Sequence Diagram: Create a New Post
 
-**Description:** This sequence diagram details the step-by-step process of a user creating a new blog post. It shows the interactions between the user, the React components, the AI flow for category suggestions, and the data layer.
+**Description:** This sequence diagram details the step-by-step process of a user creating a new blog post. It shows the interactions between the user, the React components, and the data layer.
 
 ```mermaid
 sequenceDiagram
     participant U as User
     participant PC as PostCreator
-    participant SAA as AI Action
-    participant G as Genkit Flow
     participant D as Data Layer
     U->>PC: Fills out Title and Content
-    U->>PC: Clicks "Suggest Categories"
-    PC->>SAA: Calls with post content
-    SAA->>G: Executes suggestPostCategory flow
-    G-->>SAA: Returns categories
-    SAA-->>PC: Returns suggestions
-    PC->>U: Displays suggested categories
     U->>PC: Fills out Tags
     U->>PC: Clicks "Publish Post"
     PC->>D: Saves new post

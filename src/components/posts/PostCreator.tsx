@@ -5,7 +5,6 @@ import { useState, useTransition, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { suggestPostCategory } from '@/ai/flows/suggest-post-category';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,8 +38,6 @@ type PostCreatorProps = {
 
 
 export function PostCreator({ post }: PostCreatorProps) {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
@@ -73,33 +70,6 @@ export function PostCreator({ post }: PostCreatorProps) {
     setTimeout(() => {
         textarea.setSelectionRange(start + prefix.length, start + prefix.length + selectedText.length);
     }, 0);
-  };
-
-  const handleSuggestCategories = async () => {
-    const content = form.getValues('content');
-    if (content.length < 100) {
-      toast({
-        title: 'Content too short',
-        description: 'Please write at least 100 characters to get suggestions.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    setIsLoadingSuggestions(true);
-    try {
-      const result = await suggestPostCategory({ postContent: content });
-      if (result.categories) {
-        setSuggestions(result.categories);
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Could not fetch suggestions. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoadingSuggestions(false);
-    }
   };
 
   const addTag = (tag: string) => {
@@ -183,27 +153,6 @@ export function PostCreator({ post }: PostCreatorProps) {
             </FormItem>
           )}
         />
-
-        <div>
-            <div className="flex items-center justify-between mb-2">
-                <FormLabel className="text-lg">AI-Powered Suggestions</FormLabel>
-                <Button type="button" variant="outline" size="sm" onClick={handleSuggestCategories} disabled={isLoadingSuggestions}>
-                    <Sparkles className={`mr-2 h-4 w-4 ${isLoadingSuggestions ? 'animate-spin' : ''}`} />
-                    {isLoadingSuggestions ? 'Generating...' : 'Suggest Categories'}
-                </Button>
-            </div>
-            {suggestions.length > 0 && (
-                <div className="flex flex-wrap gap-2 p-4 border rounded-lg bg-secondary/50">
-                {suggestions.map((suggestion) => (
-                    <button type="button" key={suggestion} onClick={() => addTag(suggestion)}>
-                        <Badge variant="default" className="cursor-pointer text-sm font-normal">
-                            + {suggestion}
-                        </Badge>
-                    </button>
-                ))}
-                </div>
-            )}
-        </div>
 
         <FormField
           control={form.control}
