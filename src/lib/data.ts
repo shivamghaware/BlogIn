@@ -50,7 +50,7 @@ const initialPosts: Post[] = [
 const initialComments: Record<string, Comment[]> = {
   'the-art-of-minimalism': [
     { id: 'comment-1', text: 'Great article! This is the inspiration I needed to declutter my workspace.', author: initialUsers[0], createdAt: '2024-05-15T11:00:00Z', postSlug: 'the-art-of-minimalism' },
-    { id: 'comment-2', text: `Digital minimalism is something I've been trying to practice. It's tough but so rewarding.`, author: initialUsers[1], createdAt: '2024-05-15T12:30:00Z', postSlug: 'the-art-of-minimalism' },
+    { id: 'comment-2', text: `Digital minimalism is something I\'ve been trying to practice. It\'s tough but so rewarding.`, author: initialUsers[1], createdAt: '2024-05-15T12:30:00Z', postSlug: 'the-art-of-minimalism' },
   ],
   'exploring-the-unknown': [
     { id: 'comment-3', text: 'Fascinating read! The idea of human-AI collaboration is so exciting.', author: initialUsers[2], createdAt: '2024-05-14T15:00:00Z', postSlug: 'exploring-the-unknown' },
@@ -214,21 +214,45 @@ export async function logoutUser() {
 }
 
 export async function updateUser(updatedUser: User): Promise<User> {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            let users = getLocalStorage('users', []);
-            const userIndex = users.findIndex((u: User) => u.id === updatedUser.id);
-            if (userIndex !== -1) {
-                users[userIndex] = updatedUser;
-                setLocalStorage('users', users);
-                const currentUser = getLocalStorage('currentUser', null);
-                if(currentUser && currentUser.id === updatedUser.id) {
-                    setLocalStorage('currentUser', updatedUser);
-                }
-            }
-            resolve(updatedUser);
-        }, 50);
-    });
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Update user in users array
+      let users = getLocalStorage('users', []);
+      const userIndex = users.findIndex((u: User) => u.id === updatedUser.id);
+      if (userIndex !== -1) {
+        users[userIndex] = updatedUser;
+        setLocalStorage('users', users);
+      }
+
+      // Update currentUser if it's the same user
+      const currentUser = getLocalStorage('currentUser', null);
+      if (currentUser && currentUser.id === updatedUser.id) {
+        setLocalStorage('currentUser', updatedUser);
+      }
+
+      // Update user in all posts
+      let posts = getLocalStorage('posts', []);
+      posts.forEach((post: Post) => {
+        if (post.author.id === updatedUser.id) {
+          post.author = updatedUser;
+        }
+      });
+      setLocalStorage('posts', posts);
+
+      // Update user in all comments
+      let allComments = getLocalStorage('comments', {});
+      Object.keys(allComments).forEach(slug => {
+        allComments[slug].forEach((comment: Comment) => {
+          if (comment.author.id === updatedUser.id) {
+            comment.author = updatedUser;
+          }
+        });
+      });
+      setLocalStorage('comments', allComments);
+
+      resolve(updatedUser);
+    }, 50);
+  });
 }
 
 export async function getUsers(): Promise<User[]> {
