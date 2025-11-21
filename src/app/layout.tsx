@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview This is the root layout for the entire application.
  * It sets up the basic HTML document structure, including the `<html>` and `<body>` tags,
@@ -17,6 +18,9 @@ import { Analytics } from '@vercel/analytics/react';
 export const metadata: Metadata = {
   title: 'BlogIn',
   description: 'A modern platform for writers and readers.',
+  icons: {
+    icon: './icon.svg',
+  },
 };
 
 /**
@@ -65,3 +69,4 @@ export default function RootLayout({
     </html>
   );
 }
+

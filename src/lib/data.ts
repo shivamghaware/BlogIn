@@ -88,20 +88,30 @@ const setLocalStorage = <T>(key:string, value: T) => {
 
 // --- Data Initialization ---
 
+// Increment this version to force a data reset for all users.
+const DATA_VERSION = '1.0.1'; 
+
 const initializeData = () => {
   if (!isBrowser) return;
 
-  const appDataInitialized = localStorage.getItem('appDataInitialized');
+  const storedVersion = localStorage.getItem('dataVersion');
 
-  if (!appDataInitialized) {
+  if (storedVersion !== DATA_VERSION) {
+    // Data is from an old version or not present, so we reset it.
+    // This will overwrite any existing data in localStorage.
     setLocalStorage('users', initialUsers);
     setLocalStorage('posts', initialPosts);
     setLocalStorage('comments', initialComments);
-    localStorage.setItem('appDataInitialized', 'true');
+    // We should also clear the logged-in user to avoid inconsistencies
+    localStorage.removeItem('currentUser'); 
+    // Set the new version
+    localStorage.setItem('dataVersion', DATA_VERSION);
+    // We also remove the old flag to keep things clean
+    localStorage.removeItem('appDataInitialized');
   }
 };
 
-// Initialize data on load
+// Initialize data on application load
 initializeData();
 
 
