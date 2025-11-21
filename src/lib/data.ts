@@ -5,7 +5,7 @@ import type { User, Post, Comment } from './types';
 const initialUsers: User[] = [
   { id: 'user-1', name: 'Elena Petrova', email: 'elena@example.com', avatarUrl: 'https://picsum.photos/seed/201/80/80', bio: 'Writer, dreamer, and coffee enthusiast.', followersCount: 125, followingCount: 78 },
   { id: 'user-2', name: 'John Miles', email: 'john@example.com', avatarUrl: 'https://picsum.photos/seed/202/80/80', bio: 'Exploring the intersection of technology and creativity.', followersCount: 256, followingCount: 120 },
-  { id: 'user-3', name: 'Mei Lin', email: 'mei@example.com', avatarUrl: 'https://picsum.photos/seed/203/80/80', bio: 'Lover of minimalist design and clean code.', followersCount: 512, followingCount: 32 },
+  { id: 'user-3', name: 'Shivam Ghaware', email: 'shivam@example.com', avatarUrl: 'https://picsum.photos/seed/203/80/80', bio: 'Lover of minimalist design and clean code.', followersCount: 512, followingCount: 32 },
 ];
 
 const initialPosts: Post[] = [
