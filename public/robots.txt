@@ -7,4 +7,4 @@ Disallow: /profile/edit/
 Disallow: /new-post/
 Disallow: /settings/
 
-Sitemap: https://www.example.com/sitemap.xml
+Sitemap: https://blogiinn.vercel.app/sitemap.xml
