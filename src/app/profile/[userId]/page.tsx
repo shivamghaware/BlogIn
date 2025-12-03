@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -137,7 +138,7 @@ export default function UserProfilePage() {
     });
   };
 
-   const handlePostDelete = (slug: string) => {
+  const handlePostDelete = (slug: string) => {
     setUserPosts(prevPosts => prevPosts.filter(post => post.slug !== slug));
   };
 
