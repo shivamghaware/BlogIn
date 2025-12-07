@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/icons/Logo';
 import { Button } from '@/components/ui/button';
 import { UserNav } from '@/components/auth/UserNav';
-import { PenSquare, Search, Menu, X } from 'lucide-react';
+import { PenSquare, Search, Menu } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
 import { useEffect, useState } from 'react';
 import { getMe } from '@/lib/data';
@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { useRouter } from 'next/navigation';
+import { ThemeToggle } from './ThemeToggle';
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -73,6 +74,7 @@ export default function Header() {
                 </Button>
               </Link>
             </div>
+            <ThemeToggle />
             
             {currentUser === undefined && <div className="h-8 w-9 rounded-md bg-muted animate-pulse" />}
             {currentUser !== undefined && <UserNav />}
